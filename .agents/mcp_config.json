@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "agy-symbol-server": {
+      "command": "C:\\Users\\agust\\AppData\\Local\\Programs\\Python\\Python312\\python.exe",
+      "args": [
+        "C:\\Users\\agust\\OneDrive\\Documentos\\AGY\\.agents\\skills\\token-guard\\scripts\\agy_mcp_server.py"
+      ],
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  }
+}

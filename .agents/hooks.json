@@ -1,0 +1,17 @@
+{
+  "noise-sanitizer": {
+    "enabled": true,
+    "PreToolUse": [
+      {
+        "matcher": "run_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python scripts/noise_sanitizer.py",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

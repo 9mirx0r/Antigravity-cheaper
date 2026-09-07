@@ -1,0 +1,24 @@
+[
+  {
+    "id": "eval-creator-01",
+    "description": "Creación completa de una skill 'api-tester' con scripts y validación determinista",
+    "prompt": "Crea una nueva skill en .agents/skills/api-tester para probar endpoints HTTP usando httpx.",
+    "expected_artifacts": [
+      ".agents/skills/api-tester/SKILL.md",
+      ".agents/skills/api-tester/scripts/quick_validate.py"
+    ],
+    "assertions": [
+      "El archivo SKILL.md tiene frontmatter YAML con name 'api-tester' y descripción con triggers en tercera persona.",
+      "El número de líneas en SKILL.md es menor o igual a 150.",
+      "quick_validate.py ejecutado sobre la nueva skill retorna exit code 0."
+    ]
+  },
+  {
+    "id": "eval-creator-02",
+    "description": "Detección de errores en frontmatter y enlaces rotos",
+    "prompt": "Ejecuta quick_validate.py sobre una skill con enlaces a archivos inexistentes.",
+    "assertions": [
+      "quick_validate.py detecta los enlaces rotos y retorna exit code 1 con reporte descriptivo."
+    ]
+  }
+]
