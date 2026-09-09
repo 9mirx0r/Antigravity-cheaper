@@ -8,9 +8,12 @@ on:
 
 jobs:
   test:
-    name: Run Unit Tests & Benchmark Sanity
+    name: Test (${{ matrix.os }}, Py ${{ matrix.python-version }})
     runs-on: ${{ matrix.os }}
+    env:
+      PYTHONUTF8: "1"
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
         python-version: ["3.10", "3.11", "3.12"]
@@ -31,7 +34,3 @@ jobs:
     - name: Run Core Test Suite
       run: |
         python tests/test_suite.py
-
-    - name: Run Blackbox Test Suite Sanity
-      run: |
-        python benchmarks/blackbox_benchmark/test_runners/test_blackbox.py || true

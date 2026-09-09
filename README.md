@@ -1,6 +1,8 @@
 # Antigravity-Cheaper
 
-![Antigravity Cheaper](./assets/banner.png)
+<p align="center">
+  <img src="https://cdn.jsdelivr.net/gh/9mirx0r/Antigravity-cheaper@main/assets/banner.png" alt="Antigravity Cheaper Banner" width="100%">
+</p>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 [![Python: 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg?style=flat-square)](https://www.python.org/)
@@ -27,7 +29,9 @@ In multi-turn coding sessions, agent context windows degrade rapidly. Unbounded 
 
 ## Architecture
 
-![System Architecture & Data Flow](./assets/architecture.png)
+<p align="center">
+  <img src="https://cdn.jsdelivr.net/gh/9mirx0r/Antigravity-cheaper@main/assets/architecture.png" alt="System Architecture & Data Flow" width="100%">
+</p>
 
 The toolkit introduces a progressive disclosure filter between the local workspace and the agent's context window:
 
