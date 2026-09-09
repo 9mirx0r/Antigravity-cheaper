@@ -1,61 +1,45 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 420" width="1200" height="420">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 260" width="960" height="260">
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#050507"/>
-      <stop offset="100%" stop-color="#111115"/>
-    </linearGradient>
-    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#2997FF"/>
-      <stop offset="100%" stop-color="#0066CC"/>
-    </linearGradient>
+    <style>
+      .hdr-term { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace; font-size: 14px; font-weight: 600; fill: #475569; }
+      .main-title { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 44px; font-weight: 800; fill: #0f172a; letter-spacing: -0.02em; }
+      .sub-title { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 20px; font-weight: 500; fill: #334155; }
+      .pill-text { font-family: ui-monospace, monospace; font-size: 15px; font-weight: 700; fill: #1e40af; }
+    </style>
   </defs>
 
-  <style>
-    text {
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      -webkit-font-smoothing: antialiased;
-    }
-  </style>
+  <!-- Outer Card with thick technical border -->
+  <rect x="6" y="6" width="948" height="248" rx="14" fill="#ffffff" stroke="#94a3b8" stroke-width="2.5"/>
 
-  <!-- Canvas Background -->
-  <rect width="1200" height="420" fill="url(#bg)" rx="24"/>
-  <rect width="1200" height="420" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1" rx="24"/>
+  <!-- Top Terminal Bar -->
+  <rect x="20" y="20" width="920" height="42" rx="8" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.75"/>
+  <circle cx="44" cy="41" r="7" fill="#ef4444"/>
+  <circle cx="68" cy="41" r="7" fill="#f59e0b"/>
+  <circle cx="92" cy="41" r="7" fill="#10b981"/>
+  <text x="122" y="46" class="hdr-term">antigravity-cheaper / context-guard-engine</text>
 
-  <!-- Category Pill -->
-  <g transform="translate(60, 48)">
-    <rect width="176" height="28" rx="14" fill="rgba(41,151,255,0.12)" stroke="rgba(41,151,255,0.3)" stroke-width="1"/>
-    <circle cx="14" cy="14" r="3.5" fill="#2997FF"/>
-    <text x="26" y="18" fill="#2997FF" font-size="11" font-weight="600" letter-spacing="0.06em">TOKEN OPTIMIZATION</text>
-  </g>
+  <!-- Main Title -->
+  <text x="36" y="116" class="main-title">Antigravity-Cheaper</text>
+  <text x="36" y="152" class="sub-title">Token economization &amp; FastMCP symbol server for Google Antigravity agents.</text>
 
-  <!-- Title & Subtitle -->
-  <text x="60" y="122" fill="#FFFFFF" font-size="44" font-weight="700" letter-spacing="-0.03em">Antigravity Cheaper</text>
-  <text x="60" y="156" fill="#86868B" font-size="17" font-weight="400" letter-spacing="-0.01em">High-precision token economization &amp; cognitive scaffolding for Google Antigravity.</text>
+  <!-- Technical Pills (Large & Legible) -->
+  <g transform="translate(36, 178)">
+    <rect width="205" height="42" rx="8" fill="#eff6ff" stroke="#60a5fa" stroke-width="2"/>
+    <text x="18" y="27" class="pill-text">AST Skeletons</text>
 
-  <!-- 3 Simple Apple Stat Cards -->
-  <g transform="translate(60, 200)">
-    <!-- Card 1 -->
-    <g transform="translate(0, 0)">
-      <rect width="340" height="160" rx="18" fill="#16161A" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
-      <text x="28" y="44" fill="#86868B" font-size="12" font-weight="600" letter-spacing="0.08em">RAW TOKENS</text>
-      <text x="28" y="98" fill="#30D158" font-size="48" font-weight="700" letter-spacing="-0.03em">-81.5%</text>
-      <text x="28" y="130" fill="#6E6E73" font-size="13" font-weight="400">Up to 629k tokens saved per task</text>
+    <g transform="translate(220, 0)">
+      <rect width="220" height="42" rx="8" fill="#eff6ff" stroke="#60a5fa" stroke-width="2"/>
+      <text x="18" y="27" class="pill-text">PageRank Symbol Map</text>
     </g>
 
-    <!-- Card 2 -->
-    <g transform="translate(370, 0)">
-      <rect width="340" height="160" rx="18" fill="#16161A" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
-      <text x="28" y="44" fill="#86868B" font-size="12" font-weight="600" letter-spacing="0.08em">API COST</text>
-      <text x="28" y="98" fill="#2997FF" font-size="48" font-weight="700" letter-spacing="-0.03em">-84.1%</text>
-      <text x="28" y="130" fill="#6E6E73" font-size="13" font-weight="400">Locked Gemini Context Caching</text>
+    <g transform="translate(455, 0)">
+      <rect width="205" height="42" rx="8" fill="#eff6ff" stroke="#60a5fa" stroke-width="2"/>
+      <text x="18" y="27" class="pill-text">FastMCP stdio Server</text>
     </g>
 
-    <!-- Card 3 -->
-    <g transform="translate(740, 0)">
-      <rect width="340" height="160" rx="18" fill="#16161A" stroke="rgba(255,255,255,0.08)" stroke-width="1"/>
-      <text x="28" y="44" fill="#86868B" font-size="12" font-weight="600" letter-spacing="0.08em">SPEEDUP</text>
-      <text x="28" y="98" fill="#BF5AF2" font-size="48" font-weight="700" letter-spacing="-0.03em">3.0x</text>
-      <text x="28" y="130" fill="#6E6E73" font-size="13" font-weight="400">Zero context re-parsing lag</text>
+    <g transform="translate(675, 0)">
+      <rect width="210" height="42" rx="8" fill="#eff6ff" stroke="#60a5fa" stroke-width="2"/>
+      <text x="18" y="27" class="pill-text">Prefix Cache Lock (&gt;85%)</text>
     </g>
   </g>
 </svg>

@@ -1,103 +1,134 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 560" width="1200" height="560">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 620" width="1120" height="620">
   <defs>
-    <linearGradient id="bg3" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#050507"/>
-      <stop offset="100%" stop-color="#111115"/>
-    </linearGradient>
+    <marker id="arr" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#1e293b"/>
+    </marker>
+    <marker id="arr-green" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#047857"/>
+    </marker>
+    <style>
+      .t-hdr { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 26px; font-weight: 800; fill: #0f172a; }
+      .t-hdr-sub { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: 16px; font-weight: 500; fill: #475569; }
+      .c-title { font-family: ui-monospace, monospace; font-size: 19px; font-weight: 800; }
+      .c-body { font-family: -apple-system, sans-serif; font-size: 15px; font-weight: 500; fill: #334155; }
+      .c-cmd { font-family: ui-monospace, monospace; font-size: 14px; font-weight: 700; }
+      .c-wire { stroke: #1e293b; stroke-width: 2.5; fill: none; stroke-linecap: round; }
+      .c-wire-green { stroke: #047857; stroke-width: 3.5; fill: none; stroke-linecap: round; }
+    </style>
   </defs>
 
-  <style>
-    text {
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      -webkit-font-smoothing: antialiased;
-    }
-  </style>
-
-  <!-- Canvas Background -->
-  <rect width="1200" height="560" fill="url(#bg3)" rx="24"/>
-  <rect width="1200" height="560" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1" rx="24"/>
+  <!-- Canvas Container -->
+  <rect x="8" y="8" width="1104" height="604" rx="16" fill="#ffffff" stroke="#94a3b8" stroke-width="2.5"/>
 
   <!-- Header -->
-  <g transform="translate(60, 42)">
-    <rect width="180" height="28" rx="14" fill="rgba(191,90,242,0.12)" stroke="rgba(191,90,242,0.3)" stroke-width="1"/>
-    <circle cx="14" cy="14" r="3.5" fill="#BF5AF2"/>
-    <text x="26" y="18" fill="#BF5AF2" font-size="11" font-weight="600" letter-spacing="0.06em">SYSTEM TOPOLOGY</text>
+  <text x="36" y="48" class="t-hdr">ARCHITECTURE &amp; DATA FLOW</text>
+  <text x="36" y="74" class="t-hdr-sub">How Antigravity-Cheaper isolates context and preserves the Gemini prompt cache.</text>
 
-    <text x="0" y="60" fill="#FFFFFF" font-size="28" font-weight="700" letter-spacing="-0.02em">The 4-Layer Context &amp; Cognitive Pipeline</text>
-    <text x="0" y="82" fill="#86868B" font-size="14" font-weight="400">Engineered to maximize Gemini context caching and eliminate redundant tokens.</text>
+  <!-- ==================== COLUMN 1: RAW WORKSPACE ==================== -->
+  <g transform="translate(36, 100)">
+    <rect width="250" height="480" rx="12" fill="#f8fafc" stroke="#64748b" stroke-width="2.5"/>
+    <text x="20" y="38" class="c-title" fill="#0f172a">WORKSPACE INPUT</text>
+    <text x="20" y="62" class="c-body" fill="#64748b">Raw disk files &amp; traces</text>
+    <line x1="20" y1="74" x2="230" y2="74" stroke="#cbd5e1" stroke-width="2"/>
+
+    <!-- Item 1 -->
+    <rect x="16" y="92" width="218" height="96" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+    <text x="28" y="124" class="c-title" fill="#0f172a">Source Code</text>
+    <text x="28" y="148" class="c-body">2,500+ LOC / 20+ files</text>
+    <text x="28" y="170" class="c-cmd" fill="#dc2626">Unbounded: ~150k tok</text>
+
+    <!-- Item 2 -->
+    <rect x="16" y="202" width="218" height="96" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+    <text x="28" y="234" class="c-title" fill="#0f172a">Failure Traces</text>
+    <text x="28" y="258" class="c-body">Terminal crash dumps</text>
+    <text x="28" y="280" class="c-cmd" fill="#dc2626">Noise: up to 35k lines</text>
+
+    <!-- Item 3 -->
+    <rect x="16" y="312" width="218" height="96" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+    <text x="28" y="344" class="c-title" fill="#0f172a">System Rules</text>
+    <text x="28" y="368" class="c-body">Static instructions</text>
+    <text x="28" y="390" class="c-cmd" fill="#2563eb">&gt; 2,048 token prefix</text>
+
+    <text x="22" y="445" class="c-cmd" fill="#b91c1c">Without filter: O(N²) cost</text>
   </g>
 
-  <!-- 3 Simple Horizontal Architecture Cards -->
-  <g transform="translate(60, 150)">
+  <!-- Arrows Col 1 -> Col 2 -->
+  <path d="M 286 240 L 330 162" class="c-wire" marker-end="url(#arr)"/>
+  <path d="M 286 270 L 330 272" class="c-wire" marker-end="url(#arr)"/>
+  <path d="M 286 310 L 330 382" class="c-wire" marker-end="url(#arr)"/>
+  <path d="M 286 450 L 330 492" class="c-wire" marker-end="url(#arr)"/>
 
-    <!-- Layer 1 & 2: Prefix Lock -->
-    <g transform="translate(0, 0)">
-      <rect width="1080" height="110" rx="16" fill="#16161A" stroke="rgba(41,151,255,0.25)" stroke-width="1"/>
-      <!-- Label & Desc -->
-      <text x="28" y="44" fill="#FFFFFF" font-size="17" font-weight="700">Layer 1 &amp; 2 • Prefix Lock</text>
-      <text x="28" y="68" fill="#86868B" font-size="13">Byte-frozen system invariants &gt;2,048 tokens</text>
+  <!-- ==================== COLUMN 2: FILTERS ==================== -->
+  <g transform="translate(340, 100)">
+    <!-- Filter 1 -->
+    <rect x="0" y="8" width="370" height="100" rx="10" fill="#ffffff" stroke="#2563eb" stroke-width="2.5"/>
+    <text x="18" y="38" class="c-title" fill="#1d4ed8">1. AST Skeletonizer (ast.py)</text>
+    <text x="18" y="64" class="c-body">Strips function bodies with '...' preserving types</text>
+    <text x="18" y="88" class="c-cmd" fill="#2563eb">&lt; 50 tokens per file skeleton</text>
 
-      <!-- Chips: exactly spaced! -->
-      <!-- Chip 1: x=340 -->
-      <rect x="340" y="34" width="220" height="42" rx="10" fill="#202025" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-      <text x="356" y="60" fill="#2997FF" font-size="13" font-family="monospace">agy_prefix_lock.py</text>
+    <!-- Filter 2 -->
+    <rect x="0" y="118" width="370" height="100" rx="10" fill="#ffffff" stroke="#2563eb" stroke-width="2.5"/>
+    <text x="18" y="148" class="c-title" fill="#1d4ed8">2. PageRank Map (repomap.py)</text>
+    <text x="18" y="174" class="c-body">Symbol reference graph centrality</text>
+    <text x="18" y="198" class="c-cmd" fill="#2563eb">&lt; 1,200 token budget symbol map</text>
 
-      <!-- Chip 2: x=580 -->
-      <rect x="580" y="34" width="180" height="42" rx="10" fill="#202025" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-      <text x="596" y="60" fill="#2997FF" font-size="13" font-family="monospace">agy_memory.py</text>
+    <!-- Filter 3 -->
+    <rect x="0" y="228" width="370" height="100" rx="10" fill="#ffffff" stroke="#2563eb" stroke-width="2.5"/>
+    <text x="18" y="258" class="c-title" fill="#1d4ed8">3. Bounded Slicer (pack.py)</text>
+    <text x="18" y="284" class="c-body">Packs exact error frame + 5 context lines</text>
+    <text x="18" y="308" class="c-cmd" fill="#2563eb">-14.7% input noise chars ingested</text>
 
-      <!-- Badge: x=900 -->
-      <rect x="900" y="34" width="155" height="42" rx="10" fill="rgba(41,151,255,0.12)" stroke="rgba(41,151,255,0.25)" stroke-width="1"/>
-      <text x="918" y="60" fill="#2997FF" font-size="13" font-weight="600">94.2% Cache Hits</text>
-    </g>
+    <!-- Filter 4 -->
+    <rect x="0" y="338" width="370" height="100" rx="10" fill="#ffffff" stroke="#2563eb" stroke-width="2.5"/>
+    <text x="18" y="368" class="c-title" fill="#1d4ed8">4. Prefix Lock (prefix_lock.py)</text>
+    <text x="18" y="394" class="c-body">Merkle SHA-256 byte-identical prompt validation</text>
+    <text x="18" y="418" class="c-cmd" fill="#2563eb">&gt; 85% Gemini context cache hit rate</text>
+  </g>
 
-    <!-- Layer 3: Surgical Discovery -->
-    <g transform="translate(0, 126)">
-      <rect width="1080" height="110" rx="16" fill="#16161A" stroke="rgba(48,209,88,0.25)" stroke-width="1"/>
-      <!-- Label & Desc -->
-      <text x="28" y="44" fill="#FFFFFF" font-size="17" font-weight="700">Layer 3 • Surgical Discovery</text>
-      <text x="28" y="68" fill="#86868B" font-size="13">Selective AST navigation within token budget</text>
+  <!-- Arrows Col 2 -> Col 3 -->
+  <path d="M 710 162 L 755 260" class="c-wire" marker-end="url(#arr)"/>
+  <path d="M 710 272 L 755 285" class="c-wire" marker-end="url(#arr)"/>
+  <path d="M 710 382 L 755 310" class="c-wire" marker-end="url(#arr)"/>
+  <path d="M 710 418 L 755 330" class="c-wire" marker-end="url(#arr)"/>
 
-      <!-- Chip 1: x=340 -->
-      <rect x="340" y="34" width="180" height="42" rx="10" fill="#202025" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-      <text x="356" y="60" fill="#30D158" font-size="13" font-family="monospace">agy_repomap.py</text>
+  <!-- ==================== COLUMN 3: FASTMCP & AGENT ==================== -->
+  <g transform="translate(765, 120)">
+    <!-- FastMCP Server -->
+    <rect width="180" height="240" rx="12" fill="#f0fdf4" stroke="#059669" stroke-width="2.5"/>
+    <text x="16" y="36" class="c-title" fill="#047857">FastMCP Server</text>
+    <text x="16" y="58" class="c-cmd" fill="#059669">agy_mcp_server.py</text>
+    <line x1="16" y1="70" x2="164" y2="70" stroke="#a7f3d0" stroke-width="2"/>
 
-      <!-- Chip 2: x=535 -->
-      <rect x="535" y="34" width="145" height="42" rx="10" fill="#202025" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-      <text x="551" y="60" fill="#30D158" font-size="13" font-family="monospace">agy_ast.py</text>
+    <text x="16" y="100" class="c-cmd" fill="#065f46">• get_repo_map</text>
+    <text x="16" y="128" class="c-cmd" fill="#065f46">• get_skeleton</text>
+    <text x="16" y="156" class="c-cmd" fill="#065f46">• get_slice</text>
+    <text x="16" y="184" class="c-cmd" fill="#065f46">• get_subgraph</text>
 
-      <!-- Chip 3: x=695 -->
-      <rect x="695" y="34" width="155" height="42" rx="10" fill="#202025" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-      <text x="711" y="60" fill="#30D158" font-size="13" font-family="monospace">agy_pack.py</text>
+    <rect x="14" y="196" width="152" height="32" rx="6" fill="#d1fae5"/>
+    <text x="24" y="218" class="c-cmd" fill="#047857">stdio JSON-RPC</text>
+  </g>
 
-      <!-- Badge: x=885 -->
-      <rect x="885" y="34" width="170" height="42" rx="10" fill="rgba(48,209,88,0.12)" stroke="rgba(48,209,88,0.25)" stroke-width="1"/>
-      <text x="906" y="60" fill="#30D158" font-size="13" font-weight="600">&lt;1,200 Token Map</text>
-    </g>
+  <!-- Arrow Col 3 -> Col 4 -->
+  <path d="M 945 240 L 980 240" class="c-wire-green" marker-end="url(#arr-green)"/>
 
-    <!-- Layer 4: State Machine -->
-    <g transform="translate(0, 252)">
-      <rect width="1080" height="110" rx="16" fill="#16161A" stroke="rgba(191,90,242,0.25)" stroke-width="1"/>
-      <!-- Label & Desc -->
-      <text x="28" y="44" fill="#FFFFFF" font-size="17" font-weight="700">Layer 4 • State Machine</text>
-      <text x="28" y="68" fill="#86868B" font-size="13">Strict verification &amp; swarm orchestration</text>
+  <!-- Col 4: Agent Results Card -->
+  <g transform="translate(988, 110)">
+    <rect width="105" height="260" rx="12" fill="#fefce8" stroke="#ca8a04" stroke-width="2.5"/>
+    <text x="12" y="36" class="c-title" fill="#854d0e">AGENT</text>
+    <text x="12" y="58" class="c-cmd" fill="#a16207">Gemini</text>
+    <line x1="12" y1="70" x2="93" y2="70" stroke="#fef08a" stroke-width="2"/>
 
-      <!-- Chip 1: x=340 -->
-      <rect x="340" y="34" width="180" height="42" rx="10" fill="#202025" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-      <text x="356" y="60" fill="#BF5AF2" font-size="13" font-family="monospace">agy_pipeline.py</text>
+    <text x="12" y="96" class="c-body" font-weight="700" fill="#713f12">Protected</text>
+    <text x="12" y="116" class="c-body" font-weight="700" fill="#713f12">Context</text>
 
-      <!-- Chip 2: x=535 -->
-      <rect x="535" y="34" width="175" height="42" rx="10" fill="#202025" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-      <text x="551" y="60" fill="#BF5AF2" font-size="13" font-family="monospace">Gatekeeper Critic</text>
+    <!-- Stat 1 -->
+    <rect x="8" y="132" width="89" height="52" rx="6" fill="#fef9c3" stroke="#fde047" stroke-width="1.5"/>
+    <text x="12" y="154" class="c-cmd" fill="#854d0e">-17.2%</text>
+    <text x="12" y="172" class="c-cmd" fill="#854d0e">Thinking</text>
 
-      <!-- Chip 3: x=725 -->
-      <rect x="725" y="34" width="165" height="42" rx="10" fill="#202025" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-      <text x="741" y="60" fill="#BF5AF2" font-size="13" font-family="monospace">agy_ledger.py</text>
-
-      <!-- Badge: x=925 -->
-      <rect x="925" y="34" width="130" height="42" rx="10" fill="rgba(191,90,242,0.12)" stroke="rgba(191,90,242,0.25)" stroke-width="1"/>
-      <text x="946" y="60" fill="#BF5AF2" font-size="13" font-weight="600">Zero Loss</text>
-    </g>
-
+    <!-- Stat 2 -->
+    <rect x="8" y="194" width="89" height="52" rx="6" fill="#dcfce7" stroke="#86efac" stroke-width="1.5"/>
+    <text x="12" y="216" class="c-cmd" fill="#15803d">-38.4%</text>
+    <text x="12" y="234" class="c-cmd" fill="#15803d">Cost/Task</text>
   </g>
 </svg>

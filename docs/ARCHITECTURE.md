@@ -1,140 +1,101 @@
-# Technical Architecture & Core Pillars Deep Dive
+# Technical Architecture
 
-This document provides the exhaustive technical specifications, mathematical foundations, and implementation details of **Antigravity-Cheaper**.
-
----
-
-## 1. Mathematical Formulations
-
-### 1.1 Personalized PageRank (PPR) Power Iteration
-In codebases with thousands of symbols, dumping full directory trees overwhelms the LLM context window. Antigravity-Cheaper constructs an AST call-and-import graph $G = (V, E)$ where nodes $V$ represent classes and functions, and directed edges $E$ represent references.
-
-The centrality vector $\mathbf{r}$ is computed using Personalized PageRank with inverse document frequency (IDF) edge weighting:
-
-$$\mathbf{r}^{(k+1)} = (1 - d) \mathbf{p} + d \mathbf{M} \mathbf{r}^{(k)}$$
-
-Where:
-- $d = 0.85$ is the damping factor.
-- $\mathbf{p}$ is the personalization vector, heavily weighting top-level interfaces and core modules.
-- $\mathbf{M}$ is the column-stochastic transition matrix:
-
-$$M_{ij} = \frac{\text{IDF}(s_j)}{\sum_{k \in \text{Out}(i)} \text{IDF}(s_k)}$$
-
-A binary search budget fitter iteratively prunes low-centrality symbols until the serialized ASCII skeleton precisely fits within a strict token budget (default: 1,200 tokens).
+This document outlines the technical design, data structures, and algorithms implemented in **Antigravity-Cheaper**.
 
 ---
 
-### 1.2 Gemini Context Caching Cost Model
-Google Gemini 2.5 and 3.x models offer an automatic **90% price discount** on input tokens matching a cached prefix (minimum threshold $\ge 2,048$ tokens).
+## 1. System Overview
 
-Total task financial cost $C_{\text{task}}$ across $N$ conversational turns:
+Antigravity-Cheaper sits between local workspace files and the LLM agent's context window. Its objective is to eliminate quadratic context growth ($O(N^2)$) in long-horizon agentic tasks by enforcing progressive disclosure:
 
-$$C_{\text{task}} = \sum_{t=1}^N \left[ (1 - \alpha_t) P_{\text{uncached}} T_{\text{prefix}} + \alpha_t P_{\text{cached}} T_{\text{prefix}} + P_{\text{input}} T_{\text{dynamic}} + P_{\text{output}} T_{\text{out}} \right]$$
-
-Because $P_{\text{cached}} = 0.10 \times P_{\text{uncached}}$, locking the prefix ($\alpha_t \to 1.0$) eliminates the overwhelming majority of recurring API costs.
-
----
-
-### 1.3 Cost Per Accepted Outcome (CPAO)
-Token-saving benchmarks often report raw per-turn tokens, which can be gamed by generating short, incomplete responses. Antigravity-Cheaper enforces strict true-cost accounting:
-
-$$\text{CPAO} = \frac{\sum_{i \in \text{Runs}} \text{Cost}_i}{\text{Count}(\text{Accepted Outcomes})}$$
-
-Where an outcome is strictly accepted only when 100% of integration test suites pass and the Gatekeeper Critic issues a `SHIP` verdict.
-
----
-
-## 2. Core Pillars
-
-### Pillar 1: Zero-Bloat RepoMap (`agy_repomap.py`)
-- **AST Parsing**: Parses Python ASTs and tree-sitter symbol graphs.
-- **Topological PageRank**: Identifies critical dependencies without dumping file contents.
-- **Directed Causal Pathfinding (`--path`)**: Computes shortest AST call chain between arbitrary symbols:
-  ```bash
-  python .agents/skills/token-guard/scripts/agy_repomap.py path --root . --from-sym OrderService --to-sym PaymentGateway
-  ```
-- **Error Lineage Resolution (`--causal`)**: Traces runtime stack traces back to root causes:
-  ```bash
-  python .agents/skills/token-guard/scripts/agy_repomap.py causal --root . --error "PartitionLeaseExpired"
-  ```
-
----
-
-### Pillar 2: Hardware-Invariant Prefix Locking (`agy_prefix_lock.py`)
-- **Merkle SHA-256 Validation**: Validates Layer 1 (System Prompt) and Layer 2 (Project Invariants) byte-for-byte.
-- **CRLF/LF Canonicalization**: Eliminates OS git-checkout differences that invalidate hashes.
-- **Dynamic Invariant Injection**: Queries `agy_memory.py` and bakes verified truths into the frozen prefix layer.
-
-```bash
-python .agents/skills/token-guard/scripts/agy_prefix_lock.py build --workspace . --manifest .local/prefix_lock.json
-python .agents/skills/token-guard/scripts/agy_prefix_lock.py verify --manifest .local/prefix_lock.json
+```text
+Local Workspace (2,500+ LOC / Large Logs)
+                     │
+                     ▼
+  [ AST Parser & Slicer (ast.py, pack.py) ]
+                     │  (Strips bodies, bounds error frames)
+                     ▼
+  [ Symbol Graph & PageRank (repomap.py) ]
+                     │  (Ranks symbols, fits token budget)
+                     ▼
+  [ FastMCP stdio Server (mcp_server.py) ]
+                     │  (Serves bounded queries to Agent)
+                     ▼
+  [ Frozen Prompt Invariants (prefix_lock.py) ]
+                     │  (Guarantees Gemini context cache hits)
+                     ▼
+      LLM Agent Context Window (< 85% Cache Hits, -17% Reasoning Tokens)
 ```
 
 ---
 
-### Pillar 3: FastMCP Surgical Symbol Server (`agy_mcp_server.py`)
-Exposes 4 low-overhead stdio tools over JSON-RPC 2.0:
-1. `get_repo_map(budget=1200)`: Compact ASCII dependency graph ranked by PageRank.
-2. `get_symbol_subgraph(symbol_name="...", hops=2)`: Caller/callee micro-graph.
-3. `get_file_skeleton(file_path="...")`: Interface definitions with bodies elided.
-4. `get_bounded_slice(file_path="...", needle="...", context_lines=5)`: Exact match slice with hash validation.
+## 2. Symbol Graph & PageRank Ranking (`agy_repomap.py`)
+
+When an agent needs to understand a repository, dumping full directory listings or whole files consumes thousands of unbudgeted tokens.
+
+### Graph Construction
+1. **AST Extraction**: Each Python source file is parsed using Python's `ast` module into a directed reference graph $G = (V, E)$.
+   - **Nodes ($V$)**: Defined classes, methods, and top-level functions.
+   - **Edges ($E$)**: Function calls, class instantiations, inheritance, and module imports.
+2. **Personalized PageRank**: To prioritize entrypoints and public interfaces over internal utility functions, the graph is ranked using power iteration with a damping factor of $d = 0.85$.
+   - The personalization vector biases weight toward top-level module exports and central service interfaces.
+3. **Binary Search Token Budget Fitter**:
+   - Symbols are sorted by centrality score.
+   - The renderer formats symbols into an indented outline.
+   - If the outline exceeds the configured token budget (default: 1,200 tokens), low-centrality leaf symbols are iteratively pruned until the output strictly satisfies the budget constraint.
 
 ---
 
-### Pillar 4: Cognitive State Machine & Swarm Engine (`agy_pipeline.py`)
-Implements a 3-stage finite state machine:
+## 3. Gemini Context Caching Mechanics (`agy_prefix_lock.py`)
 
-```
-[ ARCHITECT ] --(Spec Contract)--> [ IMPLEMENTER ] --(Receipt)--> [ GATEKEEPER CRITIC ]
-                                                                        |
-                                          +-----------------------------+
-                                          |
-                      +-------------------+-------------------+
-                      |                   |                   |
-                  [ SHIP ]          [ FIX-FIRST ]        [ RETHINK ]
-                      |                   |                   |
-               (Persist Memory)      (Retry Loop)      (Abort & Redesign)
-```
+Google Gemini 2.5 and 3.x models offer automated prompt caching discounts (up to 90% cost reduction) for input tokens matching an identical prefix $\ge 2,048$ tokens.
 
-- **Swarm Decomposition**: Splits specifications into isolated worker manifests with strict file access boundaries:
-  ```bash
-  python .agents/skills/token-guard/scripts/agy_pipeline.py decompose --state-file .pipeline_state.json --num-workers 3
-  ```
-- **Gatekeeper Critic**: Read-only reviewer with tri-state verdict (`SHIP`, `FIX-FIRST`, `RETHINK`).
+### The Invalidation Problem
+In naive multi-turn agent runs, prompt caches are frequently invalidated by:
+- Volatile nonces or dynamic timestamps inserted into early prompt layers.
+- Operating system line ending discrepancies (`\r\n` on Windows vs `\n` on Linux).
+- Reordering of tool definitions or system rules.
+
+### Solution: Deterministic Merkle Prefix Locking
+1. **Layer 1 (System Prompt)** and **Layer 2 (Project Invariants)** are canonicalized to standard Unix line endings (`\n`) and UTF-8 bytes.
+2. A SHA-256 Merkle root is computed over the static invariant blocks.
+3. The prefix lock script verifies that the invariant prefix remains bit-identical across turns, ensuring that the model's server-side context cache is preserved throughout the session (>85% cache hit rate).
 
 ---
 
-### Pillar 5: Zero-Tax Persistent Memory (`agy_memory.py`)
-- Sub-millisecond SQLite FTS5 full-text search with BM25 ranking.
-- Topic-Key upserts prevent duplicate knowledge.
-- Injects persistent rules into Layer 2 prefix caching.
+## 4. FastMCP Symbol Server (`agy_mcp_server.py`)
 
-```bash
-python .agents/skills/token-guard/scripts/agy_memory.py save --family architecture --key db_engine --content "Uses WAL with CRC32 framing and 24-byte alignment."
-python .agents/skills/token-guard/scripts/agy_memory.py search --query "WAL CRC32"
-```
+The toolkit provides a lightweight Model Context Protocol (MCP) server communicating over `stdio` using JSON-RPC 2.0.
 
----
-
-### Pillar 6: AST Skeletons (`agy_ast.py`)
-- Elides function/method bodies with `...` or `pass`.
-- Preserves type hints, signatures, and docstrings.
-- Cuts token overhead by 70–85% compared to full file views.
-
-```bash
-python .agents/skills/token-guard/scripts/agy_ast.py skeleton --source src/engine.py
-```
+### Exposed Tools
+- **`get_repo_map(budget: int = 1200)`**: Returns the PageRank-ranked repository symbol outline within the specified token limit.
+- **`get_file_skeleton(file_path: str)`**: Returns an AST skeleton of the target file where all function and method implementations are replaced with `...`.
+- **`get_bounded_slice(file_path: str, needle: str, context_lines: int = 5)`**: Locates the specific string/symbol and returns only the surrounding line slice, preventing full-file dumps.
+- **`get_symbol_subgraph(symbol_name: str, hops: int = 2)`**: Returns immediate callers and callees of a specific symbol.
 
 ---
 
-### Pillar 7: Bounded Trace Slicing (`agy_pack.py` & `noise_sanitizer.py`)
-- Slices massive trace logs (e.g. 35,000 lines) to exact causal failures with context.
-- Pre-Tool hook intercepts commands:
-  - Blocks `cat` / `type` on files larger than 15 KB.
-  - Redirects test commands (`pytest`, `cargo test`, `npm test`) to disk logs and surfaces only tracebacks.
+## 5. Bounded Error Slicing (`agy_pack.py`)
+
+In large test suites (e.g., distributed systems with thousands of log lines), test failures often produce 10,000+ line terminal dumps. When an agent blindly ingests the entire dump, context is flooded with repetitive stack traces.
+
+`agy_pack.py` processes raw output streams:
+1. Detects traceback frames and assertion error blocks using pattern matchers.
+2. Extracts the initial failure frame and the concluding exception message.
+3. Slices 5 lines of contextual code around the failure site.
+4. Truncates intermediate repetitive polling logs, reducing ingested error characters by up to 90%.
 
 ---
 
-### Pillar 8: Telemetry Ledger (`agy_ledger.py`)
-- Tracks raw input tokens, cached tokens, output tokens, and reasoning tokens.
-- Calculates true Cost Per Accepted Outcome across runs.
+## 6. Telemetry & Accounting (`agy_ledger.py`)
+
+To prevent gaming metrics by generating short, incomplete answers, all evaluations are audited in a local JSONL ledger (`benchmarks/data/benchmark_usage.jsonl`).
+
+### Recorded Fields
+- `task_id`: Unique identifier for the benchmark workload.
+- `variant`: Strategy variant (`baseline` vs `token_guard`).
+- `input_tokens` / `cached_input_tokens`: Raw token counts from API telemetry.
+- `reasoning_output_tokens`: Internal thinking tokens generated during reasoning turns.
+- `retries`: Number of test runs or repair cycles.
+- `elapsed_seconds`: Wall-clock execution time.
+- `accepted`: Boolean flag indicating whether 100% of validation tests passed.

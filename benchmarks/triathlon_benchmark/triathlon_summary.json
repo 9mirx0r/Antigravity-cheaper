@@ -1,0 +1,131 @@
+{
+  "benchmark_id": "triathlon_systems_marathon",
+  "timestamp": "2026-09-08T23:10:04Z",
+  "stages": [
+    "Stage 1: SQLite B-Tree",
+    "Stage 2: Raft Consensus 2PC",
+    "Stage 3: BitTorrent Wire"
+  ],
+  "variants": {
+    "baseline": {
+      "passed": true,
+      "stages": [
+        {
+          "stage": "Stage 1 (SQLite)",
+          "passed": true,
+          "tests_run": 7,
+          "failures": 0,
+          "errors": 0,
+          "elapsed_seconds": 0.54,
+          "output": ".......\n----------------------------------------------------------------------\nRan 7 tests in 0.002s\n\nOK\n"
+        },
+        {
+          "stage": "Stage 2 (Consensus)",
+          "passed": true,
+          "tests_run": 6,
+          "failures": 0,
+          "errors": 0,
+          "elapsed_seconds": 1.29,
+          "output": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.000s\n\nOK\n"
+        },
+        {
+          "stage": "Stage 3 (BitTorrent)",
+          "passed": true,
+          "tests_run": 5,
+          "failures": 0,
+          "errors": 0,
+          "elapsed_seconds": 0.54,
+          "output": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.001s\n\nOK\n"
+        }
+      ],
+      "code": {
+        "total_files": 13,
+        "total_loc": 1114,
+        "stages": {
+          "stage1_sqlite": {
+            "files": 5,
+            "loc": 477
+          },
+          "stage2_consensus": {
+            "files": 4,
+            "loc": 391
+          },
+          "stage3_bittorrent": {
+            "files": 4,
+            "loc": 246
+          }
+        }
+      },
+      "telemetry": {
+        "input_tokens": 1039731,
+        "cached_input_tokens": 883268,
+        "output_tokens": 16137,
+        "reasoning_tokens": 9179,
+        "tool_calls": 54,
+        "turns": 1,
+        "wall_clock_seconds": 318.0
+      },
+      "cost_usd": 0.07178
+    },
+    "token_guard": {
+      "passed": true,
+      "stages": [
+        {
+          "stage": "Stage 1 (SQLite)",
+          "passed": true,
+          "tests_run": 7,
+          "failures": 0,
+          "errors": 0,
+          "elapsed_seconds": 1.28,
+          "output": "C:\\\\ANTIGRAVITY WORKS\\\\Astra-Cheaper\\\\benchmarks\\\\triathlon_benchmark\\\\fixtures\\\\sample_database.db'>\n  result = method()\nResourceWarning: Enable tracemalloc to get the object allocation traceback\n.....\n----------------------------------------------------------------------\nRan 7 tests in 0.007s\n\nOK\n"
+        },
+        {
+          "stage": "Stage 2 (Consensus)",
+          "passed": true,
+          "tests_run": 6,
+          "failures": 0,
+          "errors": 0,
+          "elapsed_seconds": 0.53,
+          "output": "......\n----------------------------------------------------------------------\nRan 6 tests in 0.000s\n\nOK\n"
+        },
+        {
+          "stage": "Stage 3 (BitTorrent)",
+          "passed": true,
+          "tests_run": 5,
+          "failures": 0,
+          "errors": 0,
+          "elapsed_seconds": 1.31,
+          "output": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.001s\n\nOK\n"
+        }
+      ],
+      "code": {
+        "total_files": 13,
+        "total_loc": 1054,
+        "stages": {
+          "stage1_sqlite": {
+            "files": 5,
+            "loc": 412
+          },
+          "stage2_consensus": {
+            "files": 4,
+            "loc": 399
+          },
+          "stage3_bittorrent": {
+            "files": 4,
+            "loc": 243
+          }
+        }
+      },
+      "telemetry": {
+        "input_tokens": 1233667,
+        "cached_input_tokens": 1048001,
+        "output_tokens": 18788,
+        "reasoning_tokens": 6402,
+        "tool_calls": 64,
+        "turns": 1,
+        "wall_clock_seconds": 365.0
+      },
+      "cost_usd": 0.08226
+    }
+  }
+}

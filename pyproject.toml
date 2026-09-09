@@ -5,12 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "antigravity-cheaper"
 version = "1.0.0"
-description = "Token-Efficiency & Cognitive Scaffolding Engine for Google Antigravity and Gemini Agents"
+description = "Context optimization toolkit and FastMCP symbol server for Google Antigravity & Gemini agents"
 readme = "README.md"
-authors = [{ name = "Antigravity Cheaper Team" }]
+authors = [{ name = "9mirx0r" }]
 license = { text = "MIT" }
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",

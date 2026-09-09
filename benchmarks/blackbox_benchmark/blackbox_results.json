@@ -1,0 +1,59 @@
+{
+  "baseline": {
+    "label": "Baseline",
+    "total_steps": 142,
+    "planner_turns": 71,
+    "tool_calls": 70,
+    "test_runs": 9,
+    "file_reads": 36,
+    "file_edits": 11,
+    "wall_clock_seconds": 394.0,
+    "thinking_chars": 45257,
+    "output_chars": 1879,
+    "input_chars_tool_output": 193059,
+    "thinking_tokens_est": 11314,
+    "output_tokens_est": 481,
+    "cumulative_input_tokens_est": 2563821,
+    "input_cost_est": 0.38457315,
+    "output_cost_est": 0.00028859999999999997,
+    "thinking_cost_est": 0.0079198,
+    "total_cost_est": 0.39278155,
+    "tool_call_breakdown": {
+      "run_command": 22,
+      "list_dir": 6,
+      "view_file": 28,
+      "grep_search": 2,
+      "replace_file_content": 11,
+      "send_message": 1
+    }
+  },
+  "cheaper": {
+    "label": "Antigravity-Cheaper",
+    "total_steps": 174,
+    "planner_turns": 87,
+    "tool_calls": 86,
+    "test_runs": 8,
+    "file_reads": 60,
+    "file_edits": 11,
+    "wall_clock_seconds": 394.0,
+    "thinking_chars": 40040,
+    "output_chars": 1684,
+    "input_chars_tool_output": 173425,
+    "thinking_tokens_est": 10010,
+    "output_tokens_est": 431,
+    "cumulative_input_tokens_est": 2335371,
+    "input_cost_est": 0.35030564999999997,
+    "output_cost_est": 0.0002586,
+    "thinking_cost_est": 0.007006999999999999,
+    "total_cost_est": 0.35757124999999995,
+    "tool_call_breakdown": {
+      "run_command": 14,
+      "list_dir": 2,
+      "grep_search": 16,
+      "view_file": 42,
+      "replace_file_content": 11,
+      "send_message": 1
+    }
+  },
+  "result": "BOTH_PASS_20_20"
+}

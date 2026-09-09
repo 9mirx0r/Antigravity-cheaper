@@ -1,0 +1,82 @@
+{
+  "benchmark_id": "hextech_oracle_desktop_companion",
+  "timestamp": "2026-09-08T20:11:03Z",
+  "variants": {
+    "baseline": {
+      "variant_name": "Baseline (Unconstrained Agent)",
+      "tests": {
+        "exists": true,
+        "passed": true,
+        "returncode": 0,
+        "tests_run": 19,
+        "failures": 0,
+        "errors": 0,
+        "output": "...................\n----------------------------------------------------------------------\nRan 19 tests in 3.898s\n\nOK\n",
+        "elapsed_seconds": 4.14
+      },
+      "code": {
+        "files": 5,
+        "loc": 2320,
+        "classes_count": 6,
+        "functions_count": 53,
+        "sample_classes": [
+          "SummonerProfiler",
+          "MockLCUDaemon",
+          "LCUConnector",
+          "DraftCoach",
+          "Database",
+          "DesktopApp"
+        ]
+      },
+      "tokens": {
+        "input_tokens": 930745,
+        "cached_input_tokens": 790589,
+        "output_tokens": 36660,
+        "reasoning_tokens": 8097,
+        "tool_calls": 42,
+        "turns": 1,
+        "wall_clock_seconds": 356.0
+      },
+      "cost_usd": 0.07752,
+      "cache_hit_rate": 84.94152533722985
+    },
+    "token_guard": {
+      "variant_name": "Antigravity-Cheaper (Token-Guard Guided)",
+      "tests": {
+        "exists": true,
+        "passed": true,
+        "returncode": 0,
+        "tests_run": 16,
+        "failures": 0,
+        "errors": 0,
+        "output": "................\n----------------------------------------------------------------------\nRan 16 tests in 3.883s\n\nOK\n",
+        "elapsed_seconds": 4.12
+      },
+      "code": {
+        "files": 5,
+        "loc": 2498,
+        "classes_count": 6,
+        "functions_count": 61,
+        "sample_classes": [
+          "SummonerProfiler",
+          "MockLCUDaemon",
+          "LCUConnector",
+          "DraftCoach",
+          "HextechDatabase",
+          "HextechOracleApp"
+        ]
+      },
+      "tokens": {
+        "input_tokens": 628593,
+        "cached_input_tokens": 533637,
+        "output_tokens": 33872,
+        "reasoning_tokens": 5125,
+        "tool_calls": 33,
+        "turns": 1,
+        "wall_clock_seconds": 249.0
+      },
+      "cost_usd": 0.05765,
+      "cache_hit_rate": 84.89388205086598
+    }
+  }
+}

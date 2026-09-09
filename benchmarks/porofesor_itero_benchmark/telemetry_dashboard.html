@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hextech Oracle - Dual Subagent Benchmark</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #010A13;
+      color: #F0E6D2;
+      margin: 0;
+      padding: 40px;
+    }
+    .container {
+      max-width: 980px;
+      margin: 0 auto;
+      background: #0A1428;
+      border: 1px solid #1E282D;
+      border-radius: 12px;
+      padding: 36px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid #1E282D;
+      padding-bottom: 20px;
+      margin-bottom: 28px;
+    }
+    .title-h1 {
+      margin: 0;
+      color: #C89B3C;
+      font-size: 26px;
+      letter-spacing: 0.05em;
+    }
+    .badge-hextech {
+      background: #0AC8B9;
+      color: #010A13;
+      font-weight: 800;
+      font-size: 12px;
+      padding: 6px 14px;
+      border-radius: 9999px;
+      letter-spacing: 0.05em;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+    .card {
+      background: #091428;
+      border: 1px solid #1E282D;
+      border-left: 4px solid #C89B3C;
+      border-radius: 8px;
+      padding: 18px;
+    }
+    .card.teal {
+      border-left-color: #0AC8B9;
+    }
+    .card-title {
+      font-size: 11px;
+      color: #A09B8C;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    .card-val {
+      font-size: 24px;
+      font-weight: 700;
+      color: #F0E6D2;
+      margin-top: 8px;
+    }
+    .card-sub {
+      font-size: 12px;
+      color: #0AC8B9;
+      margin-top: 4px;
+      font-weight: 600;
+    }
+    .bar-section {
+      margin-top: 28px;
+    }
+    .bar-group {
+      margin-bottom: 20px;
+    }
+    .bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+    .bar-track {
+      background: #1E282D;
+      height: 22px;
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+    }
+    .bar-fill-base {
+      background: #E84057;
+      height: 100%;
+      border-radius: 6px;
+    }
+    .bar-fill-cheaper {
+      background: #0AC8B9;
+      height: 100%;
+      border-radius: 6px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 28px;
+      font-size: 13px;
+    }
+    th, td {
+      padding: 12px 14px;
+      text-align: left;
+      border-bottom: 1px solid #1E282D;
+    }
+    th {
+      color: #C89B3C;
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1 class="title-h1">Hextech Oracle: Benchmark Telemetry</h1>
+        <div style="color: #A09B8C; font-size: 13px; margin-top: 4px;">Porofesor + iTero Desktop Application Dual Subagent Run</div>
+      </div>
+      <div class="badge-hextech">GEMINI 3.8 FLASH HIGH</div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="card-title">Token Reduction</div>
+        <div class="card-val">-32.5%</div>
+        <div class="card-sub">930,745 &rarr; 628,593</div>
+      </div>
+      <div class="card teal">
+        <div class="card-title">Cache Hit Rate</div>
+        <div class="card-val">84.9%</div>
+        <div class="card-sub">533,637 Cached Tokens</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Cost Reduction</div>
+        <div class="card-val">-25.6%</div>
+        <div class="card-sub">$0.0775 &rarr; $0.0576</div>
+      </div>
+      <div class="card teal">
+        <div class="card-title">Test Suite Status</div>
+        <div class="card-val">16/16 PASS</div>
+        <div class="card-sub">100% Invariant Green</div>
+      </div>
+    </div>
+
+    <div class="bar-section">
+      <h3 style="color: #C89B3C; font-size: 15px; margin-bottom: 12px;">Total Input Tokens (Lower is Better)</h3>
+      <div class="bar-group">
+        <div class="bar-label"><span>Baseline (Unconstrained Agent)</span><span>930,745 tokens</span></div>
+        <div class="bar-track"><div class="bar-fill-base" style="width: 100%;"></div></div>
+      </div>
+      <div class="bar-group">
+        <div class="bar-label"><span>Antigravity-Cheaper (Token-Guard Guided)</span><span>628,593 tokens</span></div>
+        <div class="bar-track"><div class="bar-fill-cheaper" style="width: 67.5%;"></div></div>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Metric Dimension</th>
+          <th>Subagent 1 (Baseline)</th>
+          <th>Subagent 2 (Antigravity-Cheaper)</th>
+          <th>Optimization Delta</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Input Tokens</strong></td>
+          <td>930,745</td>
+          <td>628,593</td>
+          <td style="color: #0AC8B9; font-weight: bold;">-32.5%</td>
+        </tr>
+        <tr>
+          <td><strong>Cached Input Tokens</strong></td>
+          <td>790,589</td>
+          <td>533,637</td>
+          <td style="color: #0AC8B9; font-weight: bold;">84.9% Locked</td>
+        </tr>
+        <tr>
+          <td><strong>Output Tokens</strong></td>
+          <td>36,660</td>
+          <td>33,872</td>
+          <td>-2,788</td>
+        </tr>
+        <tr>
+          <td><strong>Reasoning Tokens (CoT)</strong></td>
+          <td>8,097</td>
+          <td>5,125</td>
+          <td style="color: #0AC8B9;">Filtered Attention</td>
+        </tr>
+        <tr>
+          <td><strong>Total API Cost (USD)</strong></td>
+          <td>$0.0775</td>
+          <td>$0.0576</td>
+          <td style="color: #0AC8B9; font-weight: bold;">-25.6%</td>
+        </tr>
+        <tr>
+          <td><strong>Test Pass Rate</strong></td>
+          <td>19/19 PASS</td>
+          <td>16/16 PASS</td>
+          <td style="color: #0AC8B9; font-weight: bold;">100% Correctness</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>
