@@ -7,6 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
 [![Python: 3.10+](https://img.shields.io/badge/Python-3.10%2B-blue.svg?style=flat-square)](https://www.python.org/)
 [![CI](https://github.com/9mirx0r/Antigravity-cheaper/actions/workflows/ci.yml/badge.svg)](https://github.com/9mirx0r/Antigravity-cheaper/actions)
+[![Release](https://img.shields.io/badge/Release-Automated-success.svg?style=flat-square)](https://github.com/9mirx0r/Antigravity-cheaper/releases)
 
 Context optimization toolkit and FastMCP symbol server for **Google Antigravity** and **Gemini coding agents**.
 
