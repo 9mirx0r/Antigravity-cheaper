@@ -19,9 +19,14 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 # Enforce UTF-8 stdio encoding to prevent Windows cp1252 corruption
-if hasattr(sys.stdin, "buffer"):
+if hasattr(sys.stdin, "reconfigure"):
+    sys.stdin.reconfigure(encoding="utf-8", errors="replace")
+elif hasattr(sys.stdin, "buffer"):
     sys.stdin = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8", errors="replace")
-if hasattr(sys.stdout, "buffer"):
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+elif hasattr(sys.stdout, "buffer"):
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
 # Support both package-relative and standalone imports

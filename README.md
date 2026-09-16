@@ -22,7 +22,8 @@ In multi-turn coding sessions, agent context windows degrade rapidly. Unbounded 
 - **FastMCP Auto-Setup Wizard (`agy setup`)**: Auto-detects and registers the symbol server in Antigravity, Cursor, and Claude Desktop configurations with dry-run support.
 - **Gemini Context Caching Advisor (`agy cache`)**: Calculates frozen prefix token volume against Gemini 2.5/3.x thresholds (2,048 tokens), verifying eligibility for the 90% prompt cache discount.
 - **Real-Time Workspace Dashboard (`agy stats`)**: Visual terminal card tracking module coverage, SQLite memory records, Merkle roots, and ledger financials.
-- **AST Skeletonizer (`agy_ast.py`)**: Parses Python abstract syntax trees and JS/TS signatures, stripping implementation bodies with `...`, exposing function signatures, classes, and type hints in under 50 tokens per file.
+- **AST Skeletonizer (`agy_ast.py`)**: Multi-language parser for **Python, JavaScript, TypeScript, Go, and Rust**. Strips implementation bodies with `...`, exposing function signatures, types, structs, and traits in under 50 tokens per file.
+- **PreToolUse Noise Sanitizer (`noise_sanitizer.py`)**: Intercepts commands and filters terminal output to enforce token discipline, wrapping verbose test runners to bounded logs with Never-Worse token guarantees.
 - **Personalized PageRank RepoMap (`agy_repomap.py`)**: Builds an in-memory symbol reference graph respecting `.gitignore` rules and ranks definitions using PageRank, fitting the workspace structure into a strict token budget (default: 1,200 tokens).
 - **FastMCP Symbol Server (`agy_mcp_server.py`)**: Lightweight stdio Model Context Protocol (MCP) server with native UTF-8 and strict JSON-RPC 2.0 compliance, exposing surgical discovery tools (`get_repo_map`, `get_file_skeleton`, `get_bounded_slice`, `get_symbol_subgraph`).
 - **Prompt Cache Prefix Locking (`agy_prefix_lock.py`)**: Merkle SHA-256 validation of system instructions, project files, and persistent memories to maximize Gemini Context Caching (>85% cache hit rate).
@@ -100,6 +101,9 @@ agy skeleton --source src/antigravity_cheaper/agy_repomap.py
 # Intercept and pack noisy logs to extract exact failure frames with SHA-256
 agy pack --file failure.log --contains "AssertionError" --context 5
 
+# Sanitize test runner command lines to enforce bounded execution
+agy sanitize --cmd "pytest tests/"
+
 # Lock and verify Merkle prefix invariants for Gemini prompt caching (>85% hit rate)
 agy lock --root . --verify
 
@@ -122,7 +126,8 @@ agy ledger summary --ledger benchmarks/data/benchmark_usage.jsonl
 │   ├── agy_setup.py              # 1-click MCP auto-configuration wizard
 │   ├── agy_cache_advisor.py      # Gemini 90% context caching eligibility calculator
 │   ├── agy_stats.py              # Real-time workspace health & telemetry dashboard
-│   ├── agy_ast.py                # AST skeletonizer & symbol extractor
+│   ├── agy_ast.py                # Multi-language AST skeletonizer (Python, JS, TS, Go, Rust)
+│   ├── noise_sanitizer.py        # PreToolUse command sanitizer & Never-Worse filter
 │   ├── agy_repomap.py            # Personalized PageRank symbol dependency graph
 │   ├── agy_mcp_server.py         # FastMCP stdio server (JSON-RPC 2.0)
 │   ├── agy_prefix_lock.py        # Merkle tree prefix lock (>85% cache hit rate)
@@ -133,7 +138,7 @@ agy ledger summary --ledger benchmarks/data/benchmark_usage.jsonl
 │   └── cli.py                    # Unified 'agy' umbrella CLI
 ├── .agents/                      # Agent configurations & backward-compatible shims
 ├── benchmarks/                   # Real-world telemetry benchmarks (Blackbox, Triathlon)
-└── tests/                        # 62 unit tests passing across Python 3.10-3.14
+└── tests/                        # 69 unit tests passing across Python 3.10-3.14
 ```
 
 ---
@@ -170,7 +175,7 @@ python benchmarks/triathlon_benchmark/run_triathlon_evaluator.py
 
 ## Running Unit Tests
 
-Run the complete test suite (62 passing tests):
+Run the complete test suite (69 passing tests):
 
 ```bash
 python tests/test_suite.py

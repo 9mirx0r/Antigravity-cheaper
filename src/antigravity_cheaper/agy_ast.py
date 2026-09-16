@@ -581,6 +581,262 @@ def js_ts_symbols(code: str) -> List[dict[str, Any]]:
     return symbols
 
 
+
+
+def is_go_file(path: str | Path) -> bool:
+    """Check if file is a Go source file."""
+    return Path(path).suffix.lower() == ".go"
+
+
+def is_rust_file(path: str | Path) -> bool:
+    """Check if file is a Rust source file."""
+    return Path(path).suffix.lower() == ".rs"
+
+
+def go_skeleton(code: str) -> str:
+    """Generate skeleton for Go source code by eliding function/method bodies."""
+    lines = code.splitlines()
+    output_lines: List[str] = []
+    i = 0
+    n = len(lines)
+
+    # Matches func (recv Type) Name(...) ... { or func Name(...) ... {
+    func_pattern = re.compile(
+        r"^(\s*func(?:\s*\([^)]*\))?\s+[\w$]+\s*\([^)]*\)(?:\s*(?:\([^)]*\)|[^{]+))?)\s*\{"
+    )
+
+    while i < n:
+        line = lines[i]
+        stripped = line.strip()
+
+        # Preserve comments
+        if stripped.startswith("//") or stripped.startswith("/*") or stripped.startswith("*"):
+            output_lines.append(line)
+            i += 1
+            continue
+
+        m_func = func_pattern.match(line)
+        if m_func:
+            indent = line[:len(line) - len(line.lstrip())]
+            header = m_func.group(1).rstrip()
+            end_i = skip_code_block(lines, i)
+            output_lines.append(f"{header} {{")
+            output_lines.append(f"{indent}\t...")
+            output_lines.append(f"{indent}}}")
+            i = end_i + 1
+            continue
+
+        output_lines.append(line)
+        i += 1
+
+    return "\n".join(output_lines)
+
+
+def go_symbols(code: str) -> List[dict[str, Any]]:
+    """Extract symbol list for Go source code."""
+    symbols: List[dict[str, Any]] = []
+    lines = code.splitlines()
+
+    # func (r *Recv) Method(...) ...
+    method_pattern = re.compile(
+        r"^\s*func\s*\(([^)]+)\)\s+([\w$]+)\s*(\([^)]*\))(?:\s*(.+?))?(?:\s*\{|$)"
+    )
+    # func Name(...) ...
+    func_pattern = re.compile(
+        r"^\s*func\s+([\w$]+)\s*(\([^)]*\))(?:\s*(.+?))?(?:\s*\{|$)"
+    )
+    # type Name struct/interface/alias
+    type_pattern = re.compile(
+        r"^\s*type\s+([\w$]+)\s+(struct|interface|[^{;\s]+)"
+    )
+
+    for idx, line in enumerate(lines, start=1):
+        stripped = line.strip()
+        if stripped.startswith("//") or stripped.startswith("/*") or stripped.startswith("*"):
+            continue
+
+        m_method = method_pattern.match(line)
+        if m_method:
+            recv = m_method.group(1).strip()
+            name = m_method.group(2)
+            args = m_method.group(3)
+            ret = m_method.group(4) or ""
+            symbols.append({
+                "name": name,
+                "kind": "method",
+                "receiver": recv,
+                "line": idx,
+                "args": args,
+                "returns": ret.strip(),
+                "signature": f"func ({recv}) {name}{args} {ret}".strip(),
+            })
+            continue
+
+        m_func = func_pattern.match(line)
+        if m_func:
+            name = m_func.group(1)
+            args = m_func.group(2)
+            ret = m_func.group(3) or ""
+            symbols.append({
+                "name": name,
+                "kind": "function",
+                "line": idx,
+                "args": args,
+                "returns": ret.strip(),
+                "signature": f"func {name}{args} {ret}".strip(),
+            })
+            continue
+
+        m_type = type_pattern.match(line)
+        if m_type:
+            name = m_type.group(1)
+            kind = m_type.group(2)
+            symbols.append({
+                "name": name,
+                "kind": "struct" if kind == "struct" else ("interface" if kind == "interface" else "type"),
+                "line": idx,
+                "signature": f"type {name} {kind}",
+            })
+            continue
+
+    return symbols
+
+
+def rust_skeleton(code: str) -> str:
+    """Generate skeleton for Rust source code by eliding function bodies."""
+    lines = code.splitlines()
+    output_lines: List[str] = []
+    i = 0
+    n = len(lines)
+
+    # Matches fn name(...) -> Ret {
+    fn_pattern = re.compile(
+        r"^(\s*(?:pub(?:\([^)]*\))?\s+)?(?:const\s+|async\s+|unsafe\s+)?(?:extern\s+\"[^\"]+\"\s+)?fn\s+[\w$]+(?:\s*<[^>]+>)?\s*\([^)]*\)(?:\s*->\s*[^{]+)?)\s*\{"
+    )
+
+    while i < n:
+        line = lines[i]
+        stripped = line.strip()
+
+        # Preserve comments and attributes
+        if (
+            stripped.startswith("//")
+            or stripped.startswith("/*")
+            or stripped.startswith("*")
+            or stripped.startswith("#[")
+            or stripped.startswith("#![")
+        ):
+            output_lines.append(line)
+            i += 1
+            continue
+
+        m_fn = fn_pattern.match(line)
+        if m_fn:
+            indent = line[:len(line) - len(line.lstrip())]
+            header = m_fn.group(1).rstrip()
+            end_i = skip_code_block(lines, i)
+            output_lines.append(f"{header} {{")
+            output_lines.append(f"{indent}    ...")
+            output_lines.append(f"{indent}}}")
+            i = end_i + 1
+            continue
+
+        output_lines.append(line)
+        i += 1
+
+    return "\n".join(output_lines)
+
+
+def rust_symbols(code: str) -> List[dict[str, Any]]:
+    """Extract symbol list for Rust source code."""
+    symbols: List[dict[str, Any]] = []
+    lines = code.splitlines()
+
+    fn_pattern = re.compile(
+        r"^\s*(?:pub(?:\([^)]*\))?\s+)?(?:const\s+|async\s+|unsafe\s+)?(?:extern\s+\"[^\"]+\"\s+)?fn\s+([\w$]+)(?:\s*<[^>]+>)?\s*(\([^)]*\))(?:\s*->\s*([^{;]+))?"
+    )
+    struct_pattern = re.compile(
+        r"^\s*(?:pub(?:\([^)]*\))?\s+)?struct\s+([\w$]+)(?:\s*<[^>]+>)?"
+    )
+    enum_pattern = re.compile(
+        r"^\s*(?:pub(?:\([^)]*\))?\s+)?enum\s+([\w$]+)(?:\s*<[^>]+>)?"
+    )
+    trait_pattern = re.compile(
+        r"^\s*(?:pub(?:\([^)]*\))?\s+)?trait\s+([\w$]+)(?:\s*<[^>]+>)?"
+    )
+    impl_pattern = re.compile(
+        r"^\s*impl(?:\s*<[^>]+>)?\s+([\w$<>:, \t]+?)(?:\s+for\s+([\w$<>:, \t]+))?\s*\{"
+    )
+
+    for idx, line in enumerate(lines, start=1):
+        stripped = line.strip()
+        if stripped.startswith("//") or stripped.startswith("/*") or stripped.startswith("*"):
+            continue
+
+        m_fn = fn_pattern.match(line)
+        if m_fn:
+            name = m_fn.group(1)
+            args = m_fn.group(2)
+            ret = (m_fn.group(3) or "").strip()
+            symbols.append({
+                "name": name,
+                "kind": "function",
+                "line": idx,
+                "args": args,
+                "returns": ret,
+                "signature": f"fn {name}{args}" + (f" -> {ret}" if ret else ""),
+            })
+            continue
+
+        m_struct = struct_pattern.match(line)
+        if m_struct:
+            name = m_struct.group(1)
+            symbols.append({
+                "name": name,
+                "kind": "struct",
+                "line": idx,
+                "signature": f"struct {name}",
+            })
+            continue
+
+        m_enum = enum_pattern.match(line)
+        if m_enum:
+            name = m_enum.group(1)
+            symbols.append({
+                "name": name,
+                "kind": "enum",
+                "line": idx,
+                "signature": f"enum {name}",
+            })
+            continue
+
+        m_trait = trait_pattern.match(line)
+        if m_trait:
+            name = m_trait.group(1)
+            symbols.append({
+                "name": name,
+                "kind": "trait",
+                "line": idx,
+                "signature": f"trait {name}",
+            })
+            continue
+
+        m_impl = impl_pattern.match(line)
+        if m_impl:
+            trait_name = m_impl.group(1).strip()
+            for_type = (m_impl.group(2) or "").strip()
+            sig = f"impl {trait_name} for {for_type}" if for_type else f"impl {trait_name}"
+            symbols.append({
+                "name": for_type if for_type else trait_name,
+                "kind": "impl",
+                "line": idx,
+                "signature": sig,
+            })
+            continue
+
+    return symbols
+
+
 def generate_skeleton(source_path: str | Path, style: str = "ellipsis") -> str:
     """Generate code skeleton for a given file."""
     path = Path(source_path)
@@ -590,6 +846,10 @@ def generate_skeleton(source_path: str | Path, style: str = "ellipsis") -> str:
     code = path.read_text(encoding="utf-8")
     if is_js_ts_file(path):
         return js_ts_skeleton(code)
+    if is_go_file(path):
+        return go_skeleton(code)
+    if is_rust_file(path):
+        return rust_skeleton(code)
     return python_skeleton(code, style=style)
 
 
@@ -602,6 +862,10 @@ def extract_symbols(source_path: str | Path) -> List[dict[str, Any]]:
     code = path.read_text(encoding="utf-8")
     if is_js_ts_file(path):
         return js_ts_symbols(code)
+    if is_go_file(path):
+        return go_symbols(code)
+    if is_rust_file(path):
+        return rust_symbols(code)
     return python_symbols(code)
 
 

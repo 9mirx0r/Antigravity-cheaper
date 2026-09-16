@@ -36,6 +36,7 @@ from . import agy_prefix_lock
 from . import agy_repomap
 from . import agy_setup
 from . import agy_stats
+from . import noise_sanitizer
 
 
 def print_help():
@@ -62,6 +63,7 @@ Commands:
     expand     Verified line range extraction validating SHA-256 hash
     handoff    Local threshold router (<=24KB full, >24KB pack) with circuit breaker
     capsule    Seal or check file/tree dependency validity
+    sanitize   Filter command lines and strip ANSI / terminal noise
 
   Prompt Cache & Telemetry:
     lock       Build or verify Merkle frozen prefix (>85% cache hit rate)
@@ -124,6 +126,9 @@ def main(argv: list[str] | None = None) -> int:
         sys.argv = ["agy-pack"] + sys.argv[1:]
         res = agy_pack.main()
         return res if isinstance(res, int) else 0
+
+    elif cmd in ("sanitize", "clean"):
+        return noise_sanitizer.main(sys.argv[2:])
 
     elif cmd == "capsule":
         sys.argv = ["agy-capsule"] + sys.argv[2:]
