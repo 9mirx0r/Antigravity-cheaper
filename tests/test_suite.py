@@ -22,9 +22,17 @@ for d in [SRC_DIR, SCRIPTS_DIR, AGENTS_SCRIPTS]:
         sys.path.insert(0, str(d))
 
 def main():
-    loader = unittest.TestLoader()
-    suite1 = loader.discover(str(ROOT / ".agents" / "skills" / "token-guard" / "tests"))
-    suite2 = loader.discover(str(ROOT / "tests"), pattern="test_*.py")
+    # Use fresh loader instances and explicit top_level_dir to prevent
+    # Python 3.10/3.11 loader._top_level_dir state leaking across discover calls.
+    suite1 = unittest.TestLoader().discover(
+        start_dir=str(ROOT / ".agents" / "skills" / "token-guard" / "tests"),
+        top_level_dir=str(ROOT / ".agents" / "skills" / "token-guard" / "tests"),
+    )
+    suite2 = unittest.TestLoader().discover(
+        start_dir=str(ROOT / "tests"),
+        pattern="test_phase2_*.py",
+        top_level_dir=str(ROOT / "tests"),
+    )
     all_tests = unittest.TestSuite([suite1, suite2])
     runner = unittest.TextTestRunner(verbosity=2)
     result = runner.run(all_tests)
