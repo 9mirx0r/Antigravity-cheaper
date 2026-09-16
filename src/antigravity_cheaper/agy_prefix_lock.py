@@ -26,12 +26,16 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 try:
-    from agy_repomap import RepoMapGraph, estimate_tokens
-    from agy_ast import generate_skeleton
-except ImportError:
-    # Fallback when running outside package
     from .agy_repomap import RepoMapGraph, estimate_tokens
     from .agy_ast import generate_skeleton
+    from .agy_memory import MemoryEngine
+except ImportError:
+    from agy_repomap import RepoMapGraph, estimate_tokens
+    from agy_ast import generate_skeleton
+    try:
+        from agy_memory import MemoryEngine
+    except ImportError:
+        MemoryEngine = None
 
 
 CANONICAL_SYSTEM_PREAMBLE = """You are Antigravity, an advanced agentic coding assistant powered by Google Gemini.
@@ -90,24 +94,17 @@ class PrefixLockBuilder:
             full_path = self.root_dir / rel_path
             file_hashes[rel_path] = compute_file_sha256(full_path)
 
-        merkle_root = compute_merkle_root(file_hashes)
-
         # Layer 1: Canonical System Invariant (0% Volatility)
         layer1 = f"<system_invariants>\n{CANONICAL_SYSTEM_PREAMBLE}</system_invariants>\n"
 
         # Layer 2: Knowledge Base & Architecture Map (<5% Volatility)
         layer2_blocks = []
 
-        # 1. Project Invariants from persistent memory if available
-        try:
-            from agy_memory import MemoryEngine
-            db_candidates = [
-                self.root_dir / ".local" / "memory.db",
-                Path(".local/memory.db"),
-            ]
-            active_db = next((p for p in db_candidates if p.exists()), None)
-            if active_db:
-                mem_engine = MemoryEngine(active_db)
+        # 1. Project Invariants from persistent memory if available in root_dir
+        mem_db = self.root_dir / ".local" / "memory.db"
+        if mem_db.exists() and MemoryEngine:
+            try:
+                mem_engine = MemoryEngine(mem_db)
                 mem_context = mem_engine.get_project_context(project=self.root_dir.name)
                 if not mem_context:
                     mem_context = mem_engine.get_project_context(project="default")
@@ -118,8 +115,12 @@ class PrefixLockBuilder:
                         mem_context,
                         "</project_invariants>",
                     ])
-        except Exception:
-            pass
+                rel_mem = str(mem_db.resolve().relative_to(self.root_dir)).replace("\\", "/")
+                file_hashes[rel_mem] = compute_file_sha256(mem_db)
+            except Exception:
+                pass
+
+        merkle_root = compute_merkle_root(file_hashes)
 
         # 2. Compute base RepoMap
         repomap_text = graph.render_map(budget_tokens=1500)

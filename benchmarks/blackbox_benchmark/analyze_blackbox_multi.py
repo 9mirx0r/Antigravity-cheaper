@@ -144,6 +144,12 @@ def main():
         "run2_cheaper": r"C:\Users\emir\.gemini\antigravity\brain\b68f2a49-61a8-4d0b-ac52-cb53fd88bf80\.system_generated\logs\transcript.jsonl",
     }
 
+    missing = [v for v in runs.values() if not Path(v).exists()]
+    if missing:
+        print(f"Notice: {len(missing)} benchmark transcript(s) not found on this machine.")
+        print("Provide local transcript JSONL paths to run replication analysis.")
+        return
+
     data = {k: analyze_transcript(v, k) for k, v in runs.items()}
 
     print("=" * 86)

@@ -18,12 +18,13 @@ In multi-turn coding sessions, agent context windows degrade rapidly. Unbounded 
 
 ## Key Features
 
-- **AST Skeletonizer (`agy_ast.py`)**: Parses Python abstract syntax trees and strips implementation bodies with `...`, exposing function signatures, classes, and type hints in under 50 tokens per file.
-- **Personalized PageRank RepoMap (`agy_repomap.py`)**: Builds an in-memory symbol reference graph and ranks definitions using PageRank, fitting the entire workspace structure into a strict token budget (default: 1,200 tokens).
-- **FastMCP Symbol Server (`agy_mcp_server.py`)**: Lightweight stdio Model Context Protocol (MCP) server exposing surgical discovery tools (`get_repo_map`, `get_file_skeleton`, `get_bounded_slice`, `get_symbol_subgraph`).
-- **Prompt Cache Prefix Locking (`agy_prefix_lock.py`)**: Merkle SHA-256 validation of system instructions and project invariants to maximize Gemini Context Caching (>85% cache hit rate).
-- **Bounded Error Slicing (`agy_pack.py`)**: Intercepts verbose test logs and compiler outputs, extracting only the relevant failure frames and 5 context lines, suppressing 90%+ of terminal noise.
-- **Auditable Telemetry Ledger (`agy_ledger.py`)**: Transparent JSONL ledger recording exact token usage, cache hits, wall-clock time, and cost per accepted outcome.
+- **Unified Umbrella CLI (`agy`)**: Single executable giving access to all progressive disclosure subcommands (`agy map`, `agy skeleton`, `agy pack`, `agy memory`, `agy server`).
+- **AST Skeletonizer (`agy_ast.py`)**: Parses Python abstract syntax trees and JS/TS signatures, stripping implementation bodies with `...`, exposing function signatures, classes, and type hints in under 50 tokens per file.
+- **Personalized PageRank RepoMap (`agy_repomap.py`)**: Builds an in-memory symbol reference graph respecting `.gitignore` rules and ranks definitions using PageRank, fitting the workspace structure into a strict token budget (default: 1,200 tokens).
+- **FastMCP Symbol Server (`agy_mcp_server.py`)**: Lightweight stdio Model Context Protocol (MCP) server with native UTF-8 and strict JSON-RPC 2.0 compliance, exposing surgical discovery tools (`get_repo_map`, `get_file_skeleton`, `get_bounded_slice`, `get_symbol_subgraph`).
+- **Prompt Cache Prefix Locking (`agy_prefix_lock.py`)**: Merkle SHA-256 validation of system instructions, project files, and persistent memories to maximize Gemini Context Caching (>85% cache hit rate).
+- **Bounded Error Slicing (`agy_pack.py`)**: Intercepts verbose test logs and compiler outputs, extracting only the relevant failure frames and context lines with SHA-256 integrity validation, suppressing 90%+ of terminal noise.
+- **Auditable Telemetry Ledger (`agy_ledger.py`)**: Transparent JSONL ledger recording exact token usage, cache hits, wall-clock time, and cost per accepted outcome across Gemini 2.5 and 3.x models.
 
 ---
 
@@ -67,19 +68,25 @@ Add the FastMCP symbol server to your Antigravity MCP configuration:
 }
 ```
 
-### 3. CLI Tools
+### 3. Unified CLI (`agy`)
 
-All utilities can be executed directly from the terminal or invoked by agents:
+All utilities can be executed directly from the terminal via the unified `agy` command or invoked by agents:
 
 ```bash
-# Generate a PageRank symbol map fitted to 1,000 tokens
-agy-repomap map --root . --budget 1000
+# Generate a PageRank symbol map fitted to 1,000 tokens (respects .gitignore)
+agy map --root . --budget 1000
 
 # Extract AST skeleton of a specific file
-agy-ast skeleton --source src/antigravity_cheaper/agy_repomap.py
+agy skeleton --source src/antigravity_cheaper/agy_repomap.py
+
+# Query persistent memory repository statistics
+agy memory stats
+
+# Run FastMCP server self-test
+agy server --test
 
 # Query the telemetry ledger summary
-agy-ledger summary --ledger benchmarks/data/benchmark_usage.jsonl
+agy ledger summary --ledger benchmarks/data/benchmark_usage.jsonl
 ```
 
 ---
@@ -116,7 +123,7 @@ python benchmarks/triathlon_benchmark/run_triathlon_evaluator.py
 
 ## Running Unit Tests
 
-Run the complete test suite (49 passing tests):
+Run the complete test suite (55 passing tests):
 
 ```bash
 python tests/test_suite.py

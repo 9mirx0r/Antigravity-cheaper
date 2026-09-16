@@ -11,20 +11,31 @@ Exposes surgical AST and symbol navigation tools with minimal schema tax:
 
 from __future__ import annotations
 
+import io
 import json
 import os
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-# Add script directory to sys.path
-SCRIPT_DIR = Path(__file__).resolve().parent
-if str(SCRIPT_DIR) not in sys.path:
-    sys.path.insert(0, str(SCRIPT_DIR))
+# Enforce UTF-8 stdio encoding to prevent Windows cp1252 corruption
+if hasattr(sys.stdin, "buffer"):
+    sys.stdin = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8", errors="replace")
+if hasattr(sys.stdout, "buffer"):
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
-from agy_ast import generate_skeleton
-from agy_pack import pack_file
-from agy_repomap import RepoMapGraph
+# Support both package-relative and standalone imports
+try:
+    from .agy_ast import generate_skeleton
+    from .agy_pack import pack_file
+    from .agy_repomap import RepoMapGraph
+except ImportError:
+    SCRIPT_DIR = Path(__file__).resolve().parent
+    if str(SCRIPT_DIR) not in sys.path:
+        sys.path.insert(0, str(SCRIPT_DIR))
+    from agy_ast import generate_skeleton
+    from agy_pack import pack_file
+    from agy_repomap import RepoMapGraph
 
 PROTOCOL_VERSION = "2024-11-05"
 SERVER_NAME = "agy-symbol-server"
@@ -81,6 +92,10 @@ TOOLS_SCHEMA = [
                     "type": "string",
                     "description": "Path to the source file to skeletonize.",
                 },
+                "root_dir": {
+                    "type": "string",
+                    "description": "Optional root directory to resolve relative file paths.",
+                },
                 "style": {
                     "type": "string",
                     "enum": ["ellipsis", "pass"],
@@ -99,6 +114,10 @@ TOOLS_SCHEMA = [
                 "file_path": {
                     "type": "string",
                     "description": "Path to the log or source file.",
+                },
+                "root_dir": {
+                    "type": "string",
+                    "description": "Optional root directory security boundary.",
                 },
                 "contains": {
                     "type": "string",
@@ -138,13 +157,17 @@ def execute_tool(name: str, arguments: Dict[str, Any]) -> str:
         return json.dumps(res, indent=2)
 
     elif name == "get_file_skeleton":
+        root = Path(arguments.get("root_dir", ".")).resolve()
         file_path = Path(arguments["file_path"])
+        if not file_path.is_absolute():
+            file_path = root / file_path
         style = arguments.get("style", "ellipsis")
         if not file_path.exists():
             return f"Error: File '{file_path}' does not exist."
         return generate_skeleton(str(file_path), style=style)
 
     elif name == "get_bounded_slice":
+        root = arguments.get("root_dir", ".")
         file_path = arguments["file_path"]
         contains = arguments["contains"]
         context = arguments.get("context", 2)
@@ -152,6 +175,7 @@ def execute_tool(name: str, arguments: Dict[str, Any]) -> str:
         try:
             packed = pack_file(
                 file_path,
+                root_dir=root,
                 max_chars=max_chars,
                 contains=contains,
                 context=context,
@@ -189,6 +213,10 @@ class MCPServer:
             }
 
         elif method == "notifications/initialized":
+            return None
+
+        # Ignore unhandled notifications (JSON-RPC 2.0: notifications must not receive a response)
+        if req_id is None:
             return None
 
         elif method == "tools/list":

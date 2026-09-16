@@ -158,8 +158,17 @@ def analyze_transcript(transcript_path: str, label: str) -> dict:
 
 
 def main():
-    baseline_path = r"C:\Users\emir\.gemini\antigravity\brain\a64c4855-e601-41e9-8996-dfe6b54b8c5f\.system_generated\logs\transcript.jsonl"
-    cheaper_path = r"C:\Users\emir\.gemini\antigravity\brain\ca2f313f-68a1-4ad9-8e1d-65ded077ece1\.system_generated\logs\transcript.jsonl"
+    parser = argparse.ArgumentParser(description="Analyze Operation Blackbox transcripts")
+    parser.add_argument("--baseline", default=r"C:\Users\emir\.gemini\antigravity\brain\a64c4855-e601-41e9-8996-dfe6b54b8c5f\.system_generated\logs\transcript.jsonl", help="Path to baseline transcript")
+    parser.add_argument("--cheaper", default=r"C:\Users\emir\.gemini\antigravity\brain\ca2f313f-68a1-4ad9-8e1d-65ded077ece1\.system_generated\logs\transcript.jsonl", help="Path to cheaper transcript")
+    args = parser.parse_args()
+
+    baseline_path = args.baseline
+    cheaper_path = args.cheaper
+
+    if not Path(baseline_path).exists() or not Path(cheaper_path).exists():
+        print(f"Notice: Benchmark transcripts not found on this machine:\n  Baseline: {baseline_path}\n  Cheaper: {cheaper_path}\nProvide valid transcripts via --baseline and --cheaper to compute real-time analysis.")
+        return
 
     baseline = analyze_transcript(baseline_path, "Baseline")
     cheaper = analyze_transcript(cheaper_path, "Antigravity-Cheaper")

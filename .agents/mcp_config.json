@@ -1,9 +1,10 @@
 {
   "mcpServers": {
     "agy-symbol-server": {
-      "command": "C:\\Users\\emir\\AppData\\Local\\Programs\\Python\\Python314\\python.exe",
+      "command": "python",
       "args": [
-        "c:\\ANTIGRAVITY WORKS\\Astra-Cheaper\\.agents\\skills\\token-guard\\scripts\\agy_mcp_server.py"
+        "-m",
+        "antigravity_cheaper.agy_mcp_server"
       ],
       "env": {
         "PYTHONUNBUFFERED": "1"

@@ -61,16 +61,27 @@ def prepare_handoff(
     abs_path = os.path.abspath(source_path)
     if not os.path.exists(abs_path):
         raise FileNotFoundError(f"Source file not found: {source_path}")
-    if os.path.isdir(abs_path):
-        raise IsADirectoryError(f"Source must be a file, directory given: {source_path}")
-
-    with open(abs_path, "rb") as f:
-        raw_bytes = f.read()
-
-    current_sha256 = compute_sha256(raw_bytes)
-    content_str = raw_bytes.decode("utf-8", errors="replace")
-    total_chars = len(content_str)
-    total_lines = content_str.count("\n") + (1 if content_str and not content_str.endswith("\n") else 0)
+    file_size = os.path.getsize(abs_path)
+    if file_size > full_limit * 4:
+        # File is guaranteed to exceed full_limit; stream compute sha256 without giant buffer
+        hasher = hashlib.sha256()
+        total_lines = 0
+        with open(abs_path, "rb") as f:
+            for chunk in iter(lambda: f.read(65536), b""):
+                hasher.update(chunk)
+                total_lines += chunk.count(b"\n")
+        current_sha256 = hasher.hexdigest()
+        total_chars = file_size  # upper bound approximation for threshold routing
+        raw_bytes_len = file_size
+        content_str = None
+    else:
+        with open(abs_path, "rb") as f:
+            raw_bytes = f.read()
+        current_sha256 = compute_sha256(raw_bytes)
+        content_str = raw_bytes.decode("utf-8", errors="replace")
+        total_chars = len(content_str)
+        total_lines = content_str.count("\n") + (1 if content_str and not content_str.endswith("\n") else 0)
+        raw_bytes_len = len(raw_bytes)
 
     # 1. Circuit breaker check
     if (
@@ -91,7 +102,7 @@ def prepare_handoff(
             "route": "full",
             "source": os.path.relpath(abs_path, root_dir) if root_dir else abs_path,
             "sha256": current_sha256,
-            "total_bytes": len(raw_bytes),
+            "total_bytes": raw_bytes_len,
             "total_chars": total_chars,
             "total_lines": total_lines,
             "content": content_str,
@@ -111,7 +122,7 @@ def prepare_handoff(
             "route": "pack",
             "source": os.path.relpath(abs_path, root_dir) if root_dir else abs_path,
             "sha256": current_sha256,
-            "total_bytes": len(raw_bytes),
+            "total_bytes": raw_bytes_len,
             "total_chars": total_chars,
             "total_lines": total_lines,
             "pack": pack_data,

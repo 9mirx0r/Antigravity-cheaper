@@ -29,6 +29,7 @@ mcp = ["mcp>=1.0.0"]
 dev = ["pytest>=7.0.0"]
 
 [project.scripts]
+agy = "antigravity_cheaper.cli:main"
 agy-repomap = "antigravity_cheaper.agy_repomap:main"
 agy-prefix-lock = "antigravity_cheaper.agy_prefix_lock:main"
 agy-memory = "antigravity_cheaper.agy_memory:main"

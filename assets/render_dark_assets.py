@@ -5,21 +5,32 @@ Matches GitHub Dark Mode (#0d1117 / #161b22) with large, crisp, high-contrast ty
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
-ROOT = Path(r"c:\ANTIGRAVITY WORKS\Astra-Cheaper")
+ROOT = Path(__file__).resolve().parent.parent
 ASSETS = ROOT / "assets"
 ASSETS.mkdir(exist_ok=True)
 
-# Windows Standard TrueType Fonts
-FONT_MONO_XL = ImageFont.truetype(r"C:\Windows\Fonts\consolab.ttf", 32)
-FONT_MONO_LG = ImageFont.truetype(r"C:\Windows\Fonts\consolab.ttf", 24)
-FONT_MONO_MD = ImageFont.truetype(r"C:\Windows\Fonts\consolab.ttf", 20)
-FONT_MONO_SM = ImageFont.truetype(r"C:\Windows\Fonts\consola.ttf", 17)
 
-FONT_SANS_XL = ImageFont.truetype(r"C:\Windows\Fonts\segoeuib.ttf", 46)
-FONT_SANS_LG = ImageFont.truetype(r"C:\Windows\Fonts\segoeuib.ttf", 30)
-FONT_SANS_MD = ImageFont.truetype(r"C:\Windows\Fonts\segoeuib.ttf", 22)
-FONT_SANS_REG = ImageFont.truetype(r"C:\Windows\Fonts\segoeui.ttf", 20)
-FONT_SANS_SM = ImageFont.truetype(r"C:\Windows\Fonts\segoeui.ttf", 16)
+def _load_font(path_str: str, size: int) -> ImageFont.ImageFont:
+    try:
+        return ImageFont.truetype(path_str, size)
+    except Exception:
+        try:
+            return ImageFont.load_default()
+        except Exception:
+            return None
+
+
+# Standard Fonts with fallbacks
+FONT_MONO_XL = _load_font(r"C:\Windows\Fonts\consolab.ttf", 32)
+FONT_MONO_LG = _load_font(r"C:\Windows\Fonts\consolab.ttf", 24)
+FONT_MONO_MD = _load_font(r"C:\Windows\Fonts\consolab.ttf", 20)
+FONT_MONO_SM = _load_font(r"C:\Windows\Fonts\consola.ttf", 17)
+
+FONT_SANS_XL = _load_font(r"C:\Windows\Fonts\segoeuib.ttf", 46)
+FONT_SANS_LG = _load_font(r"C:\Windows\Fonts\segoeuib.ttf", 30)
+FONT_SANS_MD = _load_font(r"C:\Windows\Fonts\segoeuib.ttf", 22)
+FONT_SANS_REG = _load_font(r"C:\Windows\Fonts\segoeui.ttf", 20)
+FONT_SANS_SM = _load_font(r"C:\Windows\Fonts\segoeui.ttf", 16)
 
 
 def render_dark_banner():

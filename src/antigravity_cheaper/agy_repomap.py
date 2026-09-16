@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import fnmatch
 import json
 import math
 import os
@@ -36,6 +37,62 @@ DEFAULT_IGNORES = {
     ".idea",
     ".vscode",
 }
+
+
+class GitIgnoreMatcher:
+    """Lightweight, dependency-free .gitignore matcher."""
+
+    def __init__(self, root_dir: Path):
+        self.root_dir = root_dir.resolve()
+        self.rules: List[Tuple[bool, str, bool]] = []
+        self._load_root_gitignore()
+
+    def _load_root_gitignore(self) -> None:
+        gi_path = self.root_dir / ".gitignore"
+        if not gi_path.is_file():
+            return
+        try:
+            content = gi_path.read_text(encoding="utf-8", errors="ignore")
+            for line in content.splitlines():
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                is_neg = line.startswith("!")
+                if is_neg:
+                    line = line[1:].strip()
+                dir_only = line.endswith("/")
+                if dir_only:
+                    line = line[:-1]
+                self.rules.append((is_neg, line, dir_only))
+        except Exception:
+            pass
+
+    def is_ignored(self, path: Path, is_dir: bool = False) -> bool:
+        try:
+            rel = path.resolve().relative_to(self.root_dir).as_posix()
+        except ValueError:
+            rel = path.as_posix()
+
+        ignored = False
+        parts = rel.split("/")
+
+        for is_neg, pat, dir_only in self.rules:
+            if dir_only and not is_dir:
+                continue
+
+            match = False
+            if "/" in pat:
+                clean_pat = pat.lstrip("/")
+                if fnmatch.fnmatch(rel, clean_pat) or fnmatch.fnmatch(rel, f"{clean_pat}/*"):
+                    match = True
+            else:
+                if any(fnmatch.fnmatch(part, pat) for part in parts):
+                    match = True
+
+            if match:
+                ignored = not is_neg
+
+        return ignored
 
 # Common programming file extensions
 CODE_EXTENSIONS = {
@@ -232,12 +289,18 @@ def extract_regex_symbols(code: str, rel_path: str, lang: str) -> FileSymbols:
     func_pat = re.compile(
         r"^\s*(?:export\s+)?(?:async\s+)?function\s+([A-Za-z0-9_]+)\s*\((.*?)\)"
     )
+    arrow_pat = re.compile(
+        r"^\s*(?:export\s+)?(?:const|let|var)\s+([A-Za-z0-9_]+)\s*=\s*(?:async\s*)?\([^)]*\)\s*(?::\s*[^=]+)?\s*=>"
+    )
     ts_interface_pat = re.compile(r"^\s*(?:export\s+)?interface\s+([A-Za-z0-9_]+)")
+    ts_type_pat = re.compile(r"^\s*(?:export\s+)?type\s+([A-Za-z0-9_]+)\s*(?:<[^>]+>)?\s*=")
     rust_fn_pat = re.compile(r"^\s*(?:pub\s+)?(?:async\s+)?fn\s+([A-Za-z0-9_]+)")
+    rust_struct_pat = re.compile(r"^\s*(?:pub\s+)?(?:struct|enum|trait)\s+([A-Za-z0-9_]+)")
     go_func_pat = re.compile(r"^\s*func\s+(?:\([^)]+\)\s+)?([A-Za-z0-9_]+)")
+    go_type_pat = re.compile(r"^\s*type\s+([A-Za-z0-9_]+)\s+(?:struct|interface)")
 
     for idx, line in enumerate(lines, 1):
-        m = class_pat.search(line)
+        m = class_pat.search(line) or rust_struct_pat.search(line) or go_type_pat.search(line)
         if m:
             fs.defs.append(
                 SymbolDef(
@@ -249,7 +312,7 @@ def extract_regex_symbols(code: str, rel_path: str, lang: str) -> FileSymbols:
             )
             continue
 
-        m = ts_interface_pat.search(line)
+        m = ts_interface_pat.search(line) or ts_type_pat.search(line)
         if m:
             fs.defs.append(
                 SymbolDef(
@@ -261,7 +324,7 @@ def extract_regex_symbols(code: str, rel_path: str, lang: str) -> FileSymbols:
             )
             continue
 
-        m = func_pat.search(line) or rust_fn_pat.search(line) or go_func_pat.search(line)
+        m = func_pat.search(line) or arrow_pat.search(line) or rust_fn_pat.search(line) or go_func_pat.search(line)
         if m:
             fs.defs.append(
                 SymbolDef(
@@ -305,13 +368,22 @@ class RepoMapGraph:
         self.root_dir = Path(root_dir).resolve()
         self.files: Dict[str, FileSymbols] = {}
         self.def_to_files: Dict[str, Set[str]] = defaultdict(set)
+        self.gitignore = GitIgnoreMatcher(self.root_dir)
 
     def scan(self) -> None:
-        """Scan directory and index all code files."""
+        """Scan directory and index all code files respecting .gitignore."""
         for root, dirs, files in os.walk(self.root_dir):
-            dirs[:] = [d for d in dirs if d not in DEFAULT_IGNORES and not d.startswith(".")]
+            dirs[:] = [
+                d
+                for d in dirs
+                if d not in DEFAULT_IGNORES
+                and not d.startswith(".")
+                and not self.gitignore.is_ignored(Path(root) / d, is_dir=True)
+            ]
             for file in files:
                 file_path = Path(root) / file
+                if self.gitignore.is_ignored(file_path, is_dir=False):
+                    continue
                 fs = parse_source_file(file_path, self.root_dir)
                 if fs and (fs.defs or fs.refs):
                     self.files[fs.rel_path] = fs

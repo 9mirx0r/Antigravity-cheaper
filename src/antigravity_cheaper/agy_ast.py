@@ -248,6 +248,100 @@ def is_js_ts_file(path: Path | str) -> bool:
     return Path(path).suffix.lower() in JS_EXTENSIONS
 
 
+def count_code_braces(line: str, in_multiline_comment: bool = False) -> Tuple[int, bool]:
+    """Count { (+1) and } (-1) in JS/TS code, ignoring braces inside strings and comments."""
+    delta = 0
+    in_single = False
+    in_double = False
+    in_template = False
+    in_comment = in_multiline_comment
+    escape = False
+
+    idx = 0
+    n = len(line)
+    while idx < n:
+        ch = line[idx]
+        nxt = line[idx + 1] if idx + 1 < n else ""
+
+        if in_comment:
+            if ch == "*" and nxt == "/":
+                in_comment = False
+                idx += 2
+                continue
+            idx += 1
+            continue
+
+        if escape:
+            escape = False
+            idx += 1
+            continue
+
+        if ch == "\\":
+            escape = True
+            idx += 1
+            continue
+
+        if in_single:
+            if ch == "'":
+                in_single = False
+            idx += 1
+            continue
+
+        if in_double:
+            if ch == '"':
+                in_double = False
+            idx += 1
+            continue
+
+        if in_template:
+            if ch == "`":
+                in_template = False
+            idx += 1
+            continue
+
+        if ch == "/" and nxt == "/":
+            break
+        if ch == "/" and nxt == "*":
+            in_comment = True
+            idx += 2
+            continue
+
+        if ch == "'":
+            in_single = True
+            idx += 1
+            continue
+        if ch == '"':
+            in_double = True
+            idx += 1
+            continue
+        if ch == "`":
+            in_template = True
+            idx += 1
+            continue
+
+        if ch == "{":
+            delta += 1
+        elif ch == "}":
+            delta -= 1
+
+        idx += 1
+
+    return delta, in_comment
+
+
+def skip_code_block(lines: List[str], start_idx: int) -> int:
+    """Advance line index until the closing brace of a JS/TS block is reached."""
+    cur_idx = start_idx
+    delta, in_comment = count_code_braces(lines[cur_idx])
+    brace_count = delta
+    n = len(lines)
+    while brace_count > 0 and cur_idx + 1 < n:
+        cur_idx += 1
+        delta, in_comment = count_code_braces(lines[cur_idx], in_comment)
+        brace_count += delta
+    return cur_idx
+
+
 def js_ts_skeleton(code: str) -> str:
     """Generate skeleton for JavaScript/TypeScript source code."""
     lines = code.splitlines()
@@ -322,12 +416,7 @@ def js_ts_skeleton(code: str) -> str:
             if m_meth and not stripped.startswith("if") and not stripped.startswith("for") and not stripped.startswith("switch"):
                 sig = m_meth.group(1).rstrip()
                 output_lines.append(f"{sig} {{ ... }}")
-                # Skip method body until closing brace
-                brace_count = line.count("{") - line.count("}")
-                while brace_count > 0 and i + 1 < n:
-                    i += 1
-                    brace_count += lines[i].count("{") - lines[i].count("}")
-                i += 1
+                i = skip_code_block(lines, i) + 1
                 continue
 
             # Class fields / properties
@@ -341,11 +430,7 @@ def js_ts_skeleton(code: str) -> str:
         if m_fn:
             sig = m_fn.group(1).rstrip()
             output_lines.append(f"{sig} {{ ... }}")
-            brace_count = line.count("{") - line.count("}")
-            while brace_count > 0 and i + 1 < n:
-                i += 1
-                brace_count += lines[i].count("{") - lines[i].count("}")
-            i += 1
+            i = skip_code_block(lines, i) + 1
             continue
 
         # Arrow function
@@ -353,11 +438,7 @@ def js_ts_skeleton(code: str) -> str:
         if m_arrow:
             sig = m_arrow.group(1).rstrip()
             output_lines.append(f"{sig} {{ ... }}")
-            brace_count = line.count("{") - line.count("}")
-            while brace_count > 0 and i + 1 < n:
-                i += 1
-                brace_count += lines[i].count("{") - lines[i].count("}")
-            i += 1
+            i = skip_code_block(lines, i) + 1
             continue
 
         # Imports & Exports

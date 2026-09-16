@@ -54,16 +54,27 @@ def pack_file(
         except ValueError:
             rel_source = source_resolved
 
-    if not source_resolved.is_file():
-        raise FileNotFoundError(f"Source file not found: {source_resolved}")
-
-    raw_bytes = source_resolved.read_bytes()
-    file_sha256 = compute_sha256_bytes(raw_bytes)
-    content = raw_bytes.decode("utf-8", errors="replace")
-
-    raw_lines = content.splitlines()
-    total_lines = len(raw_lines)
-    total_chars = len(content)
+    file_size = source_resolved.stat().st_size
+    if file_size > 25 * 1024 * 1024:
+        # Stream read for large files to avoid massive buffer allocation
+        hasher = hashlib.sha256()
+        raw_lines = []
+        with source_resolved.open("r", encoding="utf-8", errors="replace") as f:
+            for line in f:
+                raw_lines.append(line.rstrip("\r\n"))
+        with source_resolved.open("rb") as f:
+            for chunk in iter(lambda: f.read(65536), b""):
+                hasher.update(chunk)
+        file_sha256 = hasher.hexdigest()
+        total_chars = file_size
+        total_lines = len(raw_lines)
+    else:
+        raw_bytes = source_resolved.read_bytes()
+        file_sha256 = compute_sha256_bytes(raw_bytes)
+        content = raw_bytes.decode("utf-8", errors="replace")
+        raw_lines = content.splitlines()
+        total_lines = len(raw_lines)
+        total_chars = len(content)
 
     failure_re = re.compile(failure_pattern)
     diag_re = re.compile(DEFAULT_DIAG_REGEX)

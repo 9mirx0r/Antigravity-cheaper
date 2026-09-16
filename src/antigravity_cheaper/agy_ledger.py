@@ -20,17 +20,27 @@ from typing import Any, Dict, List, Optional, Tuple
 # Reference pricing per 1,000,000 tokens (USD)
 # (uncached_input, cached_input, output)
 MODEL_PRICING_PER_MILLION: Dict[str, Tuple[float, float, float]] = {
-    # Gemini 1.5 Pro & 2.0 Pro families
-    "gemini-1.5-pro": (1.25, 0.3125, 5.00),
-    "gemini-2.0-pro": (1.25, 0.3125, 5.00),
+    # Gemini Pro families (1.5, 2.0, 2.5, 3.x)
+    "gemini-3.8-pro": (1.25, 0.3125, 5.00),
+    "gemini-3.0-pro": (1.25, 0.3125, 5.00),
+    "gemini-3-pro": (1.25, 0.3125, 5.00),
     "gemini-2.5-pro": (1.25, 0.3125, 5.00),
+    "gemini-2.0-pro": (1.25, 0.3125, 5.00),
+    "gemini-1.5-pro": (1.25, 0.3125, 5.00),
     "gemini-pro": (1.25, 0.3125, 5.00),
-    # Gemini 1.5 Flash & 2.0 Flash families
-    "gemini-1.5-flash": (0.075, 0.01875, 0.30),
+    # Gemini Flash families (1.5, 2.0, 2.5, 3.x)
+    "gemini-3.8-flash": (0.075, 0.01875, 0.30),
+    "gemini-3.0-flash": (0.075, 0.01875, 0.30),
+    "gemini-3-flash": (0.075, 0.01875, 0.30),
+    "gemini-2.5-flash": (0.075, 0.01875, 0.30),
     "gemini-2.0-flash": (0.075, 0.01875, 0.30),
+    "gemini-1.5-flash": (0.075, 0.01875, 0.30),
     "gemini-flash": (0.075, 0.01875, 0.30),
+    "gemini-flash-thinking": (0.075, 0.01875, 0.30),
+    # Gemini Flash-Lite families
     "gemini-flash-lite": (0.0375, 0.009375, 0.15),
     "gemini-2.0-flash-lite": (0.0375, 0.009375, 0.15),
+    "gemini-2.5-flash-lite": (0.0375, 0.009375, 0.15),
     # Default baseline pricing fallback
     "default": (1.00, 0.25, 4.00),
 }
