@@ -18,7 +18,10 @@ In multi-turn coding sessions, agent context windows degrade rapidly. Unbounded 
 
 ## Key Features
 
-- **Unified Umbrella CLI (`agy`)**: Single executable giving access to all progressive disclosure subcommands (`agy map`, `agy skeleton`, `agy pack`, `agy memory`, `agy server`).
+- **Unified Umbrella CLI (`agy`)**: Single executable giving access to all progressive disclosure subcommands (`agy map`, `agy skeleton`, `agy pack`, `agy memory`, `agy server`, `agy setup`, `agy cache`, `agy stats`).
+- **FastMCP Auto-Setup Wizard (`agy setup`)**: Auto-detects and registers the symbol server in Antigravity, Cursor, and Claude Desktop configurations with dry-run support.
+- **Gemini Context Caching Advisor (`agy cache`)**: Calculates frozen prefix token volume against Gemini 2.5/3.x thresholds (2,048 tokens), verifying eligibility for the 90% prompt cache discount.
+- **Real-Time Workspace Dashboard (`agy stats`)**: Visual terminal card tracking module coverage, SQLite memory records, Merkle roots, and ledger financials.
 - **AST Skeletonizer (`agy_ast.py`)**: Parses Python abstract syntax trees and JS/TS signatures, stripping implementation bodies with `...`, exposing function signatures, classes, and type hints in under 50 tokens per file.
 - **Personalized PageRank RepoMap (`agy_repomap.py`)**: Builds an in-memory symbol reference graph respecting `.gitignore` rules and ranks definitions using PageRank, fitting the workspace structure into a strict token budget (default: 1,200 tokens).
 - **FastMCP Symbol Server (`agy_mcp_server.py`)**: Lightweight stdio Model Context Protocol (MCP) server with native UTF-8 and strict JSON-RPC 2.0 compliance, exposing surgical discovery tools (`get_repo_map`, `get_file_skeleton`, `get_bounded_slice`, `get_symbol_subgraph`).
@@ -54,8 +57,14 @@ pip install -e ".[dev,mcp]"
 ```
 
 ### 2. Configure Antigravity MCP
+ 
+Run the auto-setup wizard to register `agy-symbol-server` automatically:
 
-Add the FastMCP symbol server to your Antigravity MCP configuration (`.gemini/antigravity/mcp_config.json`):
+```bash
+agy setup
+```
+
+*(Or configure manually in your MCP settings file):*
 
 ```json
 {
@@ -70,9 +79,18 @@ Add the FastMCP symbol server to your Antigravity MCP configuration (`.gemini/an
 
 ### 3. Unified CLI (`agy`)
 
-All progressive disclosure utilities can be executed directly from the terminal via the unified `agy` command or invoked by agents:
+All progressive disclosure and diagnostic utilities can be executed directly via the unified `agy` command:
 
 ```bash
+# Auto-configure FastMCP symbol server across detected MCP hosts
+agy setup
+
+# Verify Gemini 90% context caching eligibility and token volume
+agy cache --root .
+
+# Display unified workspace, memory, and telemetry dashboard
+agy stats
+
 # Generate a PageRank symbol map fitted to 1,000 tokens (respects .gitignore)
 agy map --root . --budget 1000
 
@@ -101,6 +119,9 @@ agy ledger summary --ledger benchmarks/data/benchmark_usage.jsonl
 
 ```text
 ├── src/antigravity_cheaper/      # Canonical package implementation & unified agy CLI
+│   ├── agy_setup.py              # 1-click MCP auto-configuration wizard
+│   ├── agy_cache_advisor.py      # Gemini 90% context caching eligibility calculator
+│   ├── agy_stats.py              # Real-time workspace health & telemetry dashboard
 │   ├── agy_ast.py                # AST skeletonizer & symbol extractor
 │   ├── agy_repomap.py            # Personalized PageRank symbol dependency graph
 │   ├── agy_mcp_server.py         # FastMCP stdio server (JSON-RPC 2.0)
@@ -112,7 +133,7 @@ agy ledger summary --ledger benchmarks/data/benchmark_usage.jsonl
 │   └── cli.py                    # Unified 'agy' umbrella CLI
 ├── .agents/                      # Agent configurations & backward-compatible shims
 ├── benchmarks/                   # Real-world telemetry benchmarks (Blackbox, Triathlon)
-└── tests/                        # 55 unit tests passing across Python 3.10-3.14
+└── tests/                        # 62 unit tests passing across Python 3.10-3.14
 ```
 
 ---
@@ -149,7 +170,7 @@ python benchmarks/triathlon_benchmark/run_triathlon_evaluator.py
 
 ## Running Unit Tests
 
-Run the complete test suite (55 passing tests):
+Run the complete test suite (62 passing tests):
 
 ```bash
 python tests/test_suite.py

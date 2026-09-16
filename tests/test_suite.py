@@ -30,7 +30,7 @@ def main():
     )
     suite2 = unittest.TestLoader().discover(
         start_dir=str(ROOT / "tests"),
-        pattern="test_phase2_*.py",
+        pattern="test_phase*.py",
         top_level_dir=str(ROOT / "tests"),
     )
     all_tests = unittest.TestSuite([suite1, suite2])

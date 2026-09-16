@@ -12,6 +12,9 @@ Provides single-command access to all progressive disclosure tools:
   agy lock       - Build or verify Merkle prompt prefix cache
   agy ledger     - Prompt-free telemetry recording and cost summaries
   agy server     - Run FastMCP stdio symbol server
+  agy setup      - Auto-configure FastMCP symbol server in Antigravity/Cursor/Claude
+  agy cache      - Gemini 90% context caching eligibility advisor & prefix profiler
+  agy stats      - Unified workspace, memory, and telemetry dashboard
 """
 
 from __future__ import annotations
@@ -21,6 +24,7 @@ from pathlib import Path
 
 from . import __version__
 from . import agy_ast
+from . import agy_cache_advisor
 from . import agy_capsule
 from . import agy_handoff
 from . import agy_ledger
@@ -30,6 +34,8 @@ from . import agy_pack
 from . import agy_pipeline
 from . import agy_prefix_lock
 from . import agy_repomap
+from . import agy_setup
+from . import agy_stats
 
 
 def print_help():
@@ -39,6 +45,11 @@ Usage:
   agy <command> [options]
 
 Commands:
+  QOL & Diagnostics:
+    setup      Auto-configure FastMCP symbol server in Antigravity/Cursor/Claude
+    cache      Check Gemini 90% context caching eligibility & prefix volume
+    stats      Show workspace health, indexed symbols, memory, and telemetry
+
   Architecture & Symbols:
     map        Generate budget-fitted Personalized PageRank symbol map
     skeleton   Extract AST skeleton with bodies elided (...)
@@ -66,6 +77,9 @@ General Options:
   -v, --version   Show version information and exit
 
 Examples:
+  agy setup --dry-run
+  agy cache --root .
+  agy stats
   agy map --root . --budget 1200
   agy skeleton --source src/antigravity_cheaper/cli.py
   agy memory stats
@@ -74,7 +88,9 @@ Examples:
     print(help_text)
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
+    if argv is not None:
+        sys.argv = argv
     if len(sys.argv) < 2 or sys.argv[1] in ("-h", "--help", "help"):
         print_help()
         return 0
@@ -85,7 +101,16 @@ def main() -> int:
 
     cmd = sys.argv[1].lower()
 
-    if cmd in ("map", "subgraph", "summary", "path", "causal"):
+    if cmd in ("setup", "install-mcp"):
+        return agy_setup.main(sys.argv[2:])
+
+    elif cmd in ("cache", "cache-check", "advisor"):
+        return agy_cache_advisor.main(sys.argv[2:])
+
+    elif cmd in ("stats", "dashboard", "status"):
+        return agy_stats.main(sys.argv[2:])
+
+    elif cmd in ("map", "subgraph", "summary", "path", "causal"):
         sys.argv = ["agy-repomap"] + sys.argv[1:]
         res = agy_repomap.main()
         return res if isinstance(res, int) else 0
