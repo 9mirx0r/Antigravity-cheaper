@@ -12,14 +12,13 @@ from __future__ import annotations
 import argparse
 import datetime
 import json
-import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 # Reference pricing per 1,000,000 tokens (USD)
 # (uncached_input, cached_input, output)
-MODEL_PRICING_PER_MILLION: Dict[str, Tuple[float, float, float]] = {
+MODEL_PRICING_PER_MILLION: dict[str, tuple[float, float, float]] = {
     # Gemini Pro families (1.5, 2.0, 2.5, 3.x)
     "gemini-3.8-pro": (1.25, 0.3125, 5.00),
     "gemini-3.0-pro": (1.25, 0.3125, 5.00),
@@ -58,7 +57,7 @@ def parse_bool(val: Any) -> bool:
     raise ValueError(f"Cannot parse '{val}' as boolean")
 
 
-def get_model_rates(model_name: str) -> Tuple[float, float, float]:
+def get_model_rates(model_name: str) -> tuple[float, float, float]:
     """Retrieve pricing rates for a given model per 1M tokens."""
     norm = model_name.strip().lower()
     for key, rates in MODEL_PRICING_PER_MILLION.items():
@@ -67,7 +66,7 @@ def get_model_rates(model_name: str) -> Tuple[float, float, float]:
     return MODEL_PRICING_PER_MILLION["default"]
 
 
-def calculate_record_cost(record: Dict[str, Any]) -> float:
+def calculate_record_cost(record: dict[str, Any]) -> float:
     """Calculate the estimated USD cost of a single telemetry record."""
     rates = get_model_rates(record.get("model", "default"))
     rate_uncached, rate_cached, rate_output = rates
@@ -98,8 +97,8 @@ def record_telemetry(
     retries: int,
     elapsed_seconds: float,
     ledger_path: str | Path = "agy_ledger.jsonl",
-    timestamp: Optional[str] = None,
-) -> Dict[str, Any]:
+    timestamp: str | None = None,
+) -> dict[str, Any]:
     """Record a telemetry event to a JSONL file without saving prompts."""
     if not timestamp:
         timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
@@ -129,13 +128,13 @@ def record_telemetry(
     return record
 
 
-def load_ledger(ledger_path: str | Path) -> List[Dict[str, Any]]:
+def load_ledger(ledger_path: str | Path) -> list[dict[str, Any]]:
     """Load all telemetry entries from a JSONL file."""
     path = Path(ledger_path).resolve()
     if not path.is_file():
         return []
 
-    records: List[Dict[str, Any]] = []
+    records: list[dict[str, Any]] = []
     with path.open("r", encoding="utf-8") as f:
         for line in f:
             line_str = line.strip()
@@ -147,20 +146,29 @@ def load_ledger(ledger_path: str | Path) -> List[Dict[str, Any]]:
     return records
 
 
+def summarize_ledger(
+    ledger_path: str | Path,
+    variant_filter: str | None = None,
+) -> dict[str, Any]:
+    """Load a JSONL ledger file and compute the aggregated summary."""
+    records = load_ledger(ledger_path)
+    return compute_summary(records, variant_filter=variant_filter)
+
+
 def compute_summary(
-    records: List[Dict[str, Any]],
-    variant_filter: Optional[str] = None,
-) -> Dict[str, Any]:
+    records: list[dict[str, Any]],
+    variant_filter: str | None = None,
+) -> dict[str, Any]:
     """Aggregate metrics and compute cost_per_accepted_outcome by variant."""
     if variant_filter:
         records = [r for r in records if r.get("variant") == variant_filter]
 
-    variants: Dict[str, List[Dict[str, Any]]] = {}
+    variants: dict[str, list[dict[str, Any]]] = {}
     for r in records:
         v = r.get("variant", "unknown")
         variants.setdefault(v, []).append(r)
 
-    variant_summaries: Dict[str, Any] = {}
+    variant_summaries: dict[str, Any] = {}
 
     for v_name, v_records in variants.items():
         total_tasks = len(v_records)
@@ -242,9 +250,9 @@ def compute_summary(
     }
 
 
-def format_summary_table(summary: Dict[str, Any]) -> str:
+def format_summary_table(summary: dict[str, Any]) -> str:
     """Format human-readable summary table."""
-    lines: List[str] = [
+    lines: list[str] = [
         "==========================================================================================================",
         "                                     TOKEN GUARD TELEMETRY SUMMARY",
         "==========================================================================================================",
@@ -326,7 +334,7 @@ def main() -> int:
     try:
         if args.command == "record":
             acc_val = parse_bool(args.accepted)
-            rec = record_telemetry(
+            record_telemetry(
                 task_id=args.task_id,
                 variant=args.variant,
                 model=args.model,

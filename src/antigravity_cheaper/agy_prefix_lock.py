@@ -13,12 +13,10 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import math
-import os
 import sys
 import unicodedata
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 
 # Add sibling scripts to path
 SCRIPT_DIR = Path(__file__).resolve().parent
@@ -26,16 +24,13 @@ if str(SCRIPT_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPT_DIR))
 
 try:
-    from .agy_repomap import RepoMapGraph, estimate_tokens
     from .agy_ast import generate_skeleton
     from .agy_memory import MemoryEngine
-except ImportError:
-    from agy_repomap import RepoMapGraph, estimate_tokens
-    from agy_ast import generate_skeleton
-    try:
-        from agy_memory import MemoryEngine
-    except ImportError:
-        MemoryEngine = None
+    from .agy_repomap import RepoMapGraph, estimate_tokens
+except (ImportError, ValueError):
+    from agy_ast import generate_skeleton  # type: ignore
+    from agy_memory import MemoryEngine  # type: ignore
+    from agy_repomap import RepoMapGraph, estimate_tokens  # type: ignore
 
 
 CANONICAL_SYSTEM_PREAMBLE = """You are Antigravity, an advanced agentic coding assistant powered by Google Gemini.
@@ -70,7 +65,7 @@ def compute_file_sha256(file_path: Path) -> str:
     return h.hexdigest()
 
 
-def compute_merkle_root(file_hashes: Dict[str, str]) -> str:
+def compute_merkle_root(file_hashes: dict[str, str]) -> str:
     """Compute deterministic Merkle root from sorted relative paths."""
     sorted_items = sorted(file_hashes.items(), key=lambda x: x[0])
     combined = "".join(f"{path}:{h}\n" for path, h in sorted_items).encode("utf-8")
@@ -84,12 +79,12 @@ class PrefixLockBuilder:
         self.root_dir = Path(root_dir).resolve()
         self.target_tokens = target_tokens
 
-    def build_prefix(self) -> Dict[str, Any]:
+    def build_prefix(self) -> dict[str, Any]:
         """Build deterministic frozen prefix exceeding target token threshold."""
         graph = RepoMapGraph(self.root_dir)
         graph.scan()
 
-        file_hashes: Dict[str, str] = {}
+        file_hashes: dict[str, str] = {}
         for rel_path in sorted(graph.files.keys()):
             full_path = self.root_dir / rel_path
             file_hashes[rel_path] = compute_file_sha256(full_path)
@@ -102,7 +97,7 @@ class PrefixLockBuilder:
 
         # 1. Project Invariants from persistent memory if available in root_dir
         mem_db = self.root_dir / ".local" / "memory.db"
-        if mem_db.exists() and MemoryEngine:
+        if mem_db.exists() and MemoryEngine is not None:
             try:
                 mem_engine = MemoryEngine(mem_db)
                 mem_context = mem_engine.get_project_context(project=self.root_dir.name)
@@ -138,7 +133,7 @@ class PrefixLockBuilder:
         if current_tokens < self.target_tokens and graph.files:
             ranks = graph.compute_pagerank()
             ranked_files = sorted(ranks.keys(), key=lambda f: ranks[f], reverse=True)
-            
+
             skeleton_blocks = ["<module_interfaces>"]
             for rel_path in ranked_files:
                 if current_tokens >= self.target_tokens:
@@ -172,13 +167,13 @@ class PrefixLockBuilder:
             "prefix_content": canonical_prefix,
         }
 
-    def verify_manifest(self, manifest_data: Dict[str, Any]) -> Tuple[bool, str]:
+    def verify_manifest(self, manifest_data: dict[str, Any]) -> tuple[bool, str]:
         """Verify if current disk state matches manifest Merkle root."""
         root = Path(manifest_data["root"])
-        recorded_hashes: Dict[str, str] = manifest_data.get("files", {})
+        recorded_hashes: dict[str, str] = manifest_data.get("files", {})
 
-        current_hashes: Dict[str, str] = {}
-        for rel_path in recorded_hashes.keys():
+        current_hashes: dict[str, str] = {}
+        for rel_path in recorded_hashes:
             full_path = root / rel_path
             if not full_path.exists():
                 return False, f"File deleted: {rel_path}"

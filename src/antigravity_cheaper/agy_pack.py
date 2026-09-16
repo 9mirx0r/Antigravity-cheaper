@@ -14,11 +14,10 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import os
 import re
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 
 DEFAULT_FAILURE_REGEX = r"(?i)\b(fail\w*|error\w*|except\w*|traceback|assert\w*|fatal|panic|critical)\b"
 DEFAULT_DIAG_REGEX = r"(?i)\b(warn|warning|syntax|hint|note|diagnostic|caused by|at\s+[\w\.\/\\-]+:\d+)\b"
@@ -31,12 +30,12 @@ def compute_sha256_bytes(data: bytes) -> str:
 
 def pack_file(
     source_path: str | Path,
-    root_dir: Optional[str | Path] = None,
+    root_dir: str | Path | None = None,
     max_chars: int = 4000,
     failure_pattern: str = DEFAULT_FAILURE_REGEX,
-    contains: Optional[str] = None,
+    contains: str | None = None,
     context: int = 2,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Pack a file into a bounded representation respecting priorities and budget."""
     source_resolved = Path(source_path).resolve()
     if root_dir is not None:
@@ -62,8 +61,8 @@ def pack_file(
         with source_resolved.open("r", encoding="utf-8", errors="replace") as f:
             for line in f:
                 raw_lines.append(line.rstrip("\r\n"))
-        with source_resolved.open("rb") as f:
-            for chunk in iter(lambda: f.read(65536), b""):
+        with source_resolved.open("rb") as fb:
+            for chunk in iter(lambda: fb.read(65536), b""):
                 hasher.update(chunk)
         file_sha256 = hasher.hexdigest()
         total_chars = file_size
@@ -107,8 +106,8 @@ def pack_file(
         }
 
     # If exceeding budget: prioritize contains matches, failures, tail, head, diagnostics
-    priority_contains: List[int] = []
-    priority_contains_context: List[int] = []
+    priority_contains: list[int] = []
+    priority_contains_context: list[int] = []
     if contains:
         for idx, line in enumerate(raw_lines, start=1):
             if contains in line:
@@ -119,9 +118,9 @@ def pack_file(
                 if 1 <= ctx_line <= total_lines and ctx_line not in priority_contains and ctx_line not in priority_contains_context:
                     priority_contains_context.append(ctx_line)
 
-    seen_failure_texts: Set[str] = set()
-    priority_failures: List[int] = []
-    priority_diagnostics: List[int] = []
+    seen_failure_texts: set[str] = set()
+    priority_failures: list[int] = []
+    priority_diagnostics: list[int] = []
 
     for idx, line in enumerate(raw_lines, start=1):
         if failure_re.search(line):
@@ -144,7 +143,7 @@ def pack_file(
     # 2. Tail (last 10 lines)
     # 3. Head (first 5 lines)
     # 4. Diagnostics
-    selected_set: Set[int] = set()
+    selected_set: set[int] = set()
     current_chars = 0
 
     def try_add(line_idx: int) -> bool:
@@ -201,10 +200,10 @@ def pack_file(
     ]
 
     # Build formatted text with elision notices
-    formatted_parts: List[str] = []
+    formatted_parts: list[str] = []
     prev_line = 0
     for item in lines_data:
-        cur_line = item["line"]
+        cur_line: int = int(str(item["line"]))
         if prev_line > 0 and cur_line > prev_line + 1:
             omitted = cur_line - prev_line - 1
             formatted_parts.append(f"... [{omitted} lines omitted (L{prev_line + 1}-L{cur_line - 1})] ...")
@@ -242,11 +241,11 @@ def pack_file(
 
 
 def expand_pack(
-    pack_data_or_path: str | Path | Dict[str, Any],
+    pack_data_or_path: str | Path | dict[str, Any],
     start_line: int,
     end_line: int,
-    source_override: Optional[str | Path] = None,
-) -> Dict[str, Any]:
+    source_override: str | Path | None = None,
+) -> dict[str, Any]:
     """Extract a range of lines from original source after validating SHA-256 integrity."""
     if isinstance(pack_data_or_path, (str, Path)):
         pack_path = Path(pack_data_or_path)

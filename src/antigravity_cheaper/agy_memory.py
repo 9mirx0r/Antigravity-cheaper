@@ -11,12 +11,11 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import sqlite3
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 DEFAULT_DB_PATH = Path(".local/memory.db")
 
@@ -98,7 +97,7 @@ class MemoryEngine:
         content: str,
         category: str = "decision",
         project: str = "default",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Save memory with topic_key upsert semantics."""
         now = datetime.now(timezone.utc).isoformat()
         topic_key = topic_key.strip().lower()
@@ -114,7 +113,7 @@ class MemoryEngine:
                 new_rev = existing["revision_count"] + 1
                 self.conn.execute(
                     """
-                    UPDATE memories 
+                    UPDATE memories
                     SET title = ?, content = ?, category = ?, revision_count = ?, updated_at = ?
                     WHERE id = ?
                     """,
@@ -143,7 +142,7 @@ class MemoryEngine:
 
     def search(
         self, query: str, project: str = "default", limit: int = 5
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Full-text search using FTS5 with BM25 ranking."""
         # Sanitize query for FTS5: strip non-alphanumeric except spaces
         cleaned = "".join(c if c.isalnum() or c.isspace() else " " for c in query).strip()
@@ -195,7 +194,7 @@ class MemoryEngine:
             })
         return results
 
-    def get(self, topic_key: Optional[str] = None, mem_id: Optional[int] = None, project: str = "default") -> Optional[Dict[str, Any]]:
+    def get(self, topic_key: str | None = None, mem_id: int | None = None, project: str = "default") -> dict[str, Any] | None:
         """Retrieve full memory content."""
         if topic_key:
             row = self.conn.execute(
@@ -245,7 +244,7 @@ class MemoryEngine:
 
         return "\n".join(lines)
 
-    def stats(self) -> Dict[str, Any]:
+    def stats(self) -> dict[str, Any]:
         """Return memory repository statistics."""
         total = self.conn.execute("SELECT COUNT(*) FROM memories").fetchone()[0]
         categories = self.conn.execute(
@@ -302,7 +301,7 @@ def main():
     del_p.add_argument("--project", default="default", help="Project scope")
 
     # Command: stats
-    stats_p = subparsers.add_parser("stats", help="Show memory statistics")
+    subparsers.add_parser("stats", help="Show memory statistics")
 
     args = parser.parse_args()
     engine = MemoryEngine(args.db)

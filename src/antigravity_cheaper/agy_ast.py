@@ -12,11 +12,10 @@ from __future__ import annotations
 import argparse
 import ast
 import json
-import os
 import re
 import sys
 from pathlib import Path
-from typing import Any, List, Optional, Tuple
+from typing import Any
 
 
 class PythonSkeletonTransformer(ast.NodeTransformer):
@@ -26,7 +25,7 @@ class PythonSkeletonTransformer(ast.NodeTransformer):
         super().__init__()
         self.style = style.lower()
 
-    def _create_placeholder(self) -> ast.AST:
+    def _create_placeholder(self) -> ast.stmt:
         if self.style == "pass":
             return ast.Pass()
         return ast.Expr(value=ast.Constant(value=Ellipsis))
@@ -34,7 +33,7 @@ class PythonSkeletonTransformer(ast.NodeTransformer):
     def _elide_function_body(
         self, node: ast.FunctionDef | ast.AsyncFunctionDef
     ) -> ast.FunctionDef | ast.AsyncFunctionDef:
-        docstring_node: Optional[ast.AST] = None
+        docstring_node: ast.stmt | None = None
         if node.body:
             first = node.body[0]
             if (
@@ -58,16 +57,18 @@ class PythonSkeletonTransformer(ast.NodeTransformer):
         return self._elide_function_body(node)
 
     def visit_ClassDef(self, node: ast.ClassDef) -> ast.AST:
-        new_body: List[ast.AST] = []
+        new_body: list[ast.stmt] = []
         for stmt in node.body:
             if isinstance(stmt, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 new_body.append(self._elide_function_body(stmt))
             elif isinstance(stmt, ast.ClassDef):
-                new_body.append(self.visit_ClassDef(stmt))
+                elided_class = self.visit_ClassDef(stmt)
+                if isinstance(elided_class, ast.stmt):
+                    new_body.append(elided_class)
             elif isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant) and isinstance(stmt.value.value, str):
                 # Class docstring
                 new_body.append(stmt)
-            elif isinstance(stmt, (ast.AnnAssign, ast.Assign, ast.TypeAlias if hasattr(ast, "TypeAlias") else ast.AST)):
+            elif isinstance(stmt, (ast.AnnAssign, ast.Assign, getattr(ast, "TypeAlias", ast.AST))):
                 # Class-level type annotations and assignments
                 new_body.append(stmt)
             elif isinstance(stmt, ast.Pass):
@@ -110,13 +111,13 @@ def python_skeleton(code: str, style: str = "ellipsis") -> str:
     return ast.unparse(transformed)
 
 
-def python_symbols(code: str) -> List[dict[str, Any]]:
+def python_symbols(code: str) -> list[dict[str, Any]]:
     """Extract symbol table from Python code."""
     tree = ast.parse(code)
-    symbols: List[dict[str, Any]] = []
+    symbols: list[dict[str, Any]] = []
 
     def format_args(args: ast.arguments) -> str:
-        parts: List[str] = []
+        parts: list[str] = []
         # Positional-only args
         for arg in getattr(args, "posonlyargs", []):
             s = arg.arg
@@ -173,10 +174,11 @@ def python_symbols(code: str) -> List[dict[str, Any]]:
         return False
 
     def get_doc_summary(node: ast.AST) -> str:
-        doc = ast.get_docstring(node)
-        if not doc:
-            return ""
-        return doc.strip().splitlines()[0]
+        if isinstance(node, (ast.AsyncFunctionDef, ast.FunctionDef, ast.ClassDef, ast.Module)):
+            doc = ast.get_docstring(node)
+            if doc:
+                return doc.strip().splitlines()[0]
+        return ""
 
     for node in tree.body:
         if isinstance(node, ast.ClassDef):
@@ -248,7 +250,7 @@ def is_js_ts_file(path: Path | str) -> bool:
     return Path(path).suffix.lower() in JS_EXTENSIONS
 
 
-def count_code_braces(line: str, in_multiline_comment: bool = False) -> Tuple[int, bool]:
+def count_code_braces(line: str, in_multiline_comment: bool = False) -> tuple[int, bool]:
     """Count { (+1) and } (-1) in JS/TS code, ignoring braces inside strings and comments."""
     delta = 0
     in_single = False
@@ -329,7 +331,7 @@ def count_code_braces(line: str, in_multiline_comment: bool = False) -> Tuple[in
     return delta, in_comment
 
 
-def skip_code_block(lines: List[str], start_idx: int) -> int:
+def skip_code_block(lines: list[str], start_idx: int) -> int:
     """Advance line index until the closing brace of a JS/TS block is reached."""
     cur_idx = start_idx
     delta, in_comment = count_code_braces(lines[cur_idx])
@@ -345,7 +347,7 @@ def skip_code_block(lines: List[str], start_idx: int) -> int:
 def js_ts_skeleton(code: str) -> str:
     """Generate skeleton for JavaScript/TypeScript source code."""
     lines = code.splitlines()
-    output_lines: List[str] = []
+    output_lines: list[str] = []
     i = 0
     n = len(lines)
 
@@ -442,7 +444,7 @@ def js_ts_skeleton(code: str) -> str:
             continue
 
         # Imports & Exports
-        if stripped.startswith("import ") or (stripped.startswith("export ") and not "{" in stripped):
+        if stripped.startswith("import ") or (stripped.startswith("export ") and "{" not in stripped):
             output_lines.append(line)
             i += 1
             continue
@@ -462,9 +464,9 @@ def js_ts_skeleton(code: str) -> str:
     return "\n".join(output_lines)
 
 
-def js_ts_symbols(code: str) -> List[dict[str, Any]]:
+def js_ts_symbols(code: str) -> list[dict[str, Any]]:
     """Extract symbol table from JS/TS code."""
-    symbols: List[dict[str, Any]] = []
+    symbols: list[dict[str, Any]] = []
     lines = code.splitlines()
 
     class_pattern = re.compile(
@@ -482,7 +484,7 @@ def js_ts_symbols(code: str) -> List[dict[str, Any]]:
         r"^(?:(?:public|private|protected|static|async|readonly|override)\s+)*([\w$]+)\s*(\([^)]*\))(?:\s*:\s*([^{]+))?\s*\{"
     )
 
-    current_class: Optional[str] = None
+    current_class: str | None = None
     class_indent = 0
 
     for idx, line in enumerate(lines, start=1):
@@ -596,7 +598,7 @@ def is_rust_file(path: str | Path) -> bool:
 def go_skeleton(code: str) -> str:
     """Generate skeleton for Go source code by eliding function/method bodies."""
     lines = code.splitlines()
-    output_lines: List[str] = []
+    output_lines: list[str] = []
     i = 0
     n = len(lines)
 
@@ -632,9 +634,9 @@ def go_skeleton(code: str) -> str:
     return "\n".join(output_lines)
 
 
-def go_symbols(code: str) -> List[dict[str, Any]]:
+def go_symbols(code: str) -> list[dict[str, Any]]:
     """Extract symbol list for Go source code."""
-    symbols: List[dict[str, Any]] = []
+    symbols: list[dict[str, Any]] = []
     lines = code.splitlines()
 
     # func (r *Recv) Method(...) ...
@@ -705,7 +707,7 @@ def go_symbols(code: str) -> List[dict[str, Any]]:
 def rust_skeleton(code: str) -> str:
     """Generate skeleton for Rust source code by eliding function bodies."""
     lines = code.splitlines()
-    output_lines: List[str] = []
+    output_lines: list[str] = []
     i = 0
     n = len(lines)
 
@@ -747,9 +749,9 @@ def rust_skeleton(code: str) -> str:
     return "\n".join(output_lines)
 
 
-def rust_symbols(code: str) -> List[dict[str, Any]]:
+def rust_symbols(code: str) -> list[dict[str, Any]]:
     """Extract symbol list for Rust source code."""
-    symbols: List[dict[str, Any]] = []
+    symbols: list[dict[str, Any]] = []
     lines = code.splitlines()
 
     fn_pattern = re.compile(
@@ -853,7 +855,7 @@ def generate_skeleton(source_path: str | Path, style: str = "ellipsis") -> str:
     return python_skeleton(code, style=style)
 
 
-def extract_symbols(source_path: str | Path) -> List[dict[str, Any]]:
+def extract_symbols(source_path: str | Path) -> list[dict[str, Any]]:
     """Extract symbol list for a given file."""
     path = Path(source_path)
     if not path.exists():
@@ -924,7 +926,7 @@ def main() -> int:
                 result = json.dumps(symbols, indent=2)
             else:
                 # Format readable table
-                lines: List[str] = [f"Symbols in {args.source}:"]
+                lines: list[str] = [f"Symbols in {args.source}:"]
                 for sym in symbols:
                     kind = sym.get("kind", "symbol")
                     line = sym.get("line", "?")

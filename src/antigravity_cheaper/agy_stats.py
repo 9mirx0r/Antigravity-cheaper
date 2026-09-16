@@ -9,16 +9,12 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import sqlite3
 import sys
 from pathlib import Path
 from typing import Any
 
-from . import __version__
-from . import agy_cache_advisor
-from . import agy_ledger
-from . import agy_prefix_lock
+from . import __version__, agy_cache_advisor, agy_ledger
 
 
 def collect_stats(root_dir: Path) -> dict[str, Any]:
@@ -37,7 +33,8 @@ def collect_stats(root_dir: Path) -> dict[str, Any]:
 
     # 2. SQLite Persistent Memory
     mem_db = root_dir / ".local" / "memory.db"
-    memory_stats = {"exists": False, "count": 0, "size_bytes": 0, "topics": {}}
+    topics_dict: dict[str, int] = {}
+    memory_stats: dict[str, Any] = {"exists": False, "count": 0, "size_bytes": 0, "topics": topics_dict}
     if mem_db.exists():
         try:
             memory_stats["exists"] = True
@@ -46,7 +43,7 @@ def collect_stats(root_dir: Path) -> dict[str, Any]:
             cur = conn.cursor()
             cur.execute("SELECT topic, COUNT(*) FROM memories GROUP BY topic")
             for topic, count in cur.fetchall():
-                memory_stats["topics"][topic] = count
+                topics_dict[topic] = count
             cur.execute("SELECT COUNT(*) FROM memories")
             row = cur.fetchone()
             memory_stats["count"] = row[0] if row else 0
@@ -59,7 +56,7 @@ def collect_stats(root_dir: Path) -> dict[str, Any]:
     prefix_stats = {"locked": False, "merkle_root": None, "file_count": 0}
     if manifest_path.exists():
         try:
-            with open(manifest_path, "r", encoding="utf-8") as f:
+            with open(manifest_path, encoding="utf-8") as f:
                 mdata = json.load(f)
                 prefix_stats["locked"] = True
                 prefix_stats["merkle_root"] = mdata.get("merkle_root")

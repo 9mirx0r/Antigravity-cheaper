@@ -18,7 +18,6 @@ Intercepts 'run_command' tool calls and filters outputs to enforce token discipl
 import argparse
 import io
 import json
-import math
 import os
 import re
 import sys
@@ -154,7 +153,7 @@ def _is_large_file(file_path: str, cwd: str) -> tuple[bool, str]:
             if size_bytes > LARGE_FILE_BYTES_THRESHOLD:
                 return True, f"file of {size_bytes} bytes (threshold: {LARGE_FILE_BYTES_THRESHOLD} B)"
 
-            with open(target_file, "r", encoding="utf-8", errors="replace") as f:
+            with open(target_file, encoding="utf-8", errors="replace") as f:
                 line_count = sum(1 for _ in f)
                 if line_count > LARGE_FILE_LINES_THRESHOLD:
                     return True, f"file of {line_count} lines (threshold: {LARGE_FILE_LINES_THRESHOLD} lines)"

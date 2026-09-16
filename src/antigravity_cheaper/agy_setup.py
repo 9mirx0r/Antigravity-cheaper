@@ -17,7 +17,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-
 SERVER_NAME = "agy-symbol-server"
 DEFAULT_SERVER_CONFIG = {
     "command": "python",
@@ -60,7 +59,7 @@ def read_json_config(path: Path) -> dict[str, Any]:
     if not path.exists():
         return {}
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             data = json.load(f)
             return data if isinstance(data, dict) else {}
     except Exception as e:

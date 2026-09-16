@@ -21,10 +21,10 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 
-def compute_file_sha256(path: Path) -> Optional[str]:
+def compute_file_sha256(path: Path) -> str | None:
     """Compute sha256 for a file if it exists."""
     if not path.is_file():
         return None
@@ -35,7 +35,7 @@ def compute_file_sha256(path: Path) -> Optional[str]:
     return hasher.hexdigest()
 
 
-def compute_tree_hash(tree_path: Path) -> Tuple[Optional[str], int]:
+def compute_tree_hash(tree_path: Path) -> tuple[str | None, int]:
     """Recursively compute deterministic sha256 hash of a directory tree.
 
     Sorts relative paths lexicographically, hashes each file, and combines
@@ -44,7 +44,7 @@ def compute_tree_hash(tree_path: Path) -> Tuple[Optional[str], int]:
     if not tree_path.is_dir():
         return None, 0
 
-    entries: List[Tuple[str, str]] = []
+    entries: list[tuple[str, str]] = []
     file_count = 0
 
     for root, dirnames, filenames in os.walk(tree_path):
@@ -61,26 +61,26 @@ def compute_tree_hash(tree_path: Path) -> Tuple[Optional[str], int]:
     entries.sort(key=lambda x: x[0])
     combined_hasher = hashlib.sha256()
     for rel_path, file_hash in entries:
-        combined_hasher.update(f"{rel_path}:{file_hash}\n".encode("utf-8"))
+        combined_hasher.update(f"{rel_path}:{file_hash}\n".encode())
 
     return combined_hasher.hexdigest(), file_count
 
 
 def seal_capsule(
     claim: str,
-    files: Optional[List[str]] = None,
-    trees: Optional[List[str]] = None,
+    files: list[str] | None = None,
+    trees: list[str] | None = None,
     kind: str = "static",
-    ttl_seconds: Optional[float] = None,
-    base_dir: Optional[str | Path] = None,
-) -> Dict[str, Any]:
+    ttl_seconds: float | None = None,
+    base_dir: str | Path | None = None,
+) -> dict[str, Any]:
     """Seal dependencies into a capsule dictionary."""
     base = Path(base_dir).resolve() if base_dir else Path.cwd()
     norm_kind = kind.strip().lower()
     if norm_kind not in ("static", "live"):
         raise ValueError(f"Invalid capsule kind: '{kind}'. Must be 'static' or 'live'.")
 
-    files_record: Dict[str, Dict[str, Any]] = {}
+    files_record: dict[str, dict[str, Any]] = {}
     if files:
         for f_str in files:
             f_path = Path(f_str)
@@ -107,7 +107,7 @@ def seal_capsule(
                     "absolute_path": str(f_path).replace("\\", "/"),
                 }
 
-    trees_record: Dict[str, Dict[str, Any]] = {}
+    trees_record: dict[str, dict[str, Any]] = {}
     if trees:
         for t_str in trees:
             t_path = Path(t_str)
@@ -151,9 +151,9 @@ def seal_capsule(
 
 
 def check_status(
-    capsule_data_or_path: str | Path | Dict[str, Any],
-    base_dir_override: Optional[str | Path] = None,
-) -> Dict[str, Any]:
+    capsule_data_or_path: str | Path | dict[str, Any],
+    base_dir_override: str | Path | None = None,
+) -> dict[str, Any]:
     """Check the status of a sealed capsule.
 
     Returns dictionary with:
@@ -199,7 +199,7 @@ def check_status(
             "reason": f"Capsule expired: {elapsed:.1f}s elapsed > TTL of {ttl}s.",
         }
 
-    changed_paths: List[str] = []
+    changed_paths: list[str] = []
 
     # 3. Check individual files
     files_record = capsule.get("files", {})

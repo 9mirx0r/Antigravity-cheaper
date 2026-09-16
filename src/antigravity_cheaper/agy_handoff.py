@@ -18,13 +18,13 @@ import hashlib
 import json
 import os
 import sys
-from typing import Any, Dict, Optional
+from typing import Any
 
 # Import local sibling agy_pack if available
 try:
     from . import agy_pack
-except ImportError:
-    import agy_pack
+except (ImportError, ValueError):
+    import agy_pack  # type: ignore
 
 
 DEFAULT_FULL_LIMIT = 24000   # ~6,000 tokens
@@ -33,7 +33,6 @@ DEFAULT_PACK_LIMIT = 3500    # ~875 tokens
 
 class CircuitBreakerError(Exception):
     """Raised when recovery attempts threshold is exceeded on unchanged source."""
-    pass
 
 
 def compute_sha256(data: bytes) -> str:
@@ -45,16 +44,16 @@ def prepare_handoff(
     full_limit: int = DEFAULT_FULL_LIMIT,
     pack_limit: int = DEFAULT_PACK_LIMIT,
     recovery_attempts: int = 0,
-    previous_sha256: Optional[str] = None,
-    task: Optional[str] = None,
-    acceptance: Optional[str] = None,
-    contains: Optional[str] = None,
+    previous_sha256: str | None = None,
+    task: str | None = None,
+    acceptance: str | None = None,
+    contains: str | None = None,
     context: int = 2,
-    root_dir: Optional[str] = None,
-) -> Dict[str, Any]:
+    root_dir: str | None = None,
+) -> dict[str, Any]:
     """
     Deterministically decides whether to deliver full content or a bounded pack.
-    
+
     Returns a dictionary with routing metadata and payload.
     Raises CircuitBreakerError if 2+ recoveries occurred on unchanged source.
     """

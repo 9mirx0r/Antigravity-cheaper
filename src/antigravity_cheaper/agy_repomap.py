@@ -19,7 +19,7 @@ import re
 import sys
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 
 # Default ignore directories
 DEFAULT_IGNORES = {
@@ -44,7 +44,7 @@ class GitIgnoreMatcher:
 
     def __init__(self, root_dir: Path):
         self.root_dir = root_dir.resolve()
-        self.rules: List[Tuple[bool, str, bool]] = []
+        self.rules: list[tuple[bool, str, bool]] = []
         self._load_root_gitignore()
 
     def _load_root_gitignore(self) -> None:
@@ -127,8 +127,8 @@ class SymbolDef:
         line: int,
         signature: str = "",
         docstring: str = "",
-        parent: Optional[str] = None,
-        refs: Optional[Set[str]] = None,
+        parent: str | None = None,
+        refs: set[str] | None = None,
     ):
         self.name = name
         self.kind = kind  # 'class', 'function', 'method'
@@ -136,9 +136,9 @@ class SymbolDef:
         self.signature = signature
         self.docstring = docstring
         self.parent = parent  # Name of parent class if method
-        self.refs: Set[str] = refs if refs is not None else set()
+        self.refs: set[str] = refs if refs is not None else set()
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "kind": self.kind,
@@ -156,10 +156,10 @@ class FileSymbols:
     def __init__(self, rel_path: str, lang: str):
         self.rel_path = rel_path.replace("\\", "/")
         self.lang = lang
-        self.defs: List[SymbolDef] = []
-        self.refs: Set[str] = set()
+        self.defs: list[SymbolDef] = []
+        self.refs: set[str] = set()
 
-    def def_names(self) -> Set[str]:
+    def def_names(self) -> set[str]:
         return {d.name for d in self.defs}
 
 
@@ -168,16 +168,17 @@ class PythonASTExtractor(ast.NodeVisitor):
 
     def __init__(self):
         super().__init__()
-        self.defs: List[SymbolDef] = []
-        self.refs: Set[str] = set()
-        self.current_class: Optional[str] = None
-        self.symbol_stack: List[SymbolDef] = []
+        self.defs: list[SymbolDef] = []
+        self.refs: set[str] = set()
+        self.current_class: str | None = None
+        self.symbol_stack: list[SymbolDef] = []
 
     def _extract_docstring(self, node: ast.AST) -> str:
-        doc = ast.get_docstring(node) or ""
-        if doc:
-            first_line = doc.strip().split("\n")[0].strip()
-            return first_line[:80]
+        if isinstance(node, (ast.AsyncFunctionDef, ast.FunctionDef, ast.ClassDef, ast.Module)):
+            doc = ast.get_docstring(node) or ""
+            if doc:
+                first_line = doc.strip().split("\n")[0].strip()
+                return first_line[:80]
         return ""
 
     def _format_signature(self, node: ast.FunctionDef | ast.AsyncFunctionDef) -> str:
@@ -341,7 +342,7 @@ def extract_regex_symbols(code: str, rel_path: str, lang: str) -> FileSymbols:
     return fs
 
 
-def parse_source_file(file_path: Path, root_path: Path) -> Optional[FileSymbols]:
+def parse_source_file(file_path: Path, root_path: Path) -> FileSymbols | None:
     """Parse a single source file into definitions and references."""
     ext = file_path.suffix.lower()
     if ext not in CODE_EXTENSIONS:
@@ -366,8 +367,8 @@ class RepoMapGraph:
 
     def __init__(self, root_dir: str | Path):
         self.root_dir = Path(root_dir).resolve()
-        self.files: Dict[str, FileSymbols] = {}
-        self.def_to_files: Dict[str, Set[str]] = defaultdict(set)
+        self.files: dict[str, FileSymbols] = {}
+        self.def_to_files: dict[str, set[str]] = defaultdict(set)
         self.gitignore = GitIgnoreMatcher(self.root_dir)
 
     def scan(self) -> None:
@@ -390,13 +391,13 @@ class RepoMapGraph:
                     for def_name in fs.def_names():
                         self.def_to_files[def_name].add(fs.rel_path)
 
-    def build_adj_matrix(self) -> Tuple[List[str], Dict[str, Dict[str, float]]]:
+    def build_adj_matrix(self) -> tuple[list[str], dict[str, dict[str, float]]]:
         """Build directed adjacency graph with Ambiguity-Discounted Edge Weights.
 
         W(f_i, f_j) = sum_{s in Refs(f_i) & Defs(f_j)} 1 / |FilesDef(s)|
         """
         nodes = sorted(self.files.keys())
-        adj: Dict[str, Dict[str, float]] = {u: defaultdict(float) for u in nodes}
+        adj: dict[str, dict[str, float]] = {u: defaultdict(float) for u in nodes}
 
         for src, fs_src in self.files.items():
             for ref_name in fs_src.refs:
@@ -412,19 +413,19 @@ class RepoMapGraph:
 
     def compute_pagerank(
         self,
-        focus_files: Optional[List[str]] = None,
+        focus_files: list[str] | None = None,
         damping: float = 0.85,
         max_iter: int = 80,
         tol: float = 1e-6,
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Compute Personalized PageRank using power iteration."""
         nodes, adj = self.build_adj_matrix()
         N = len(nodes)
         if N == 0:
             return {}
 
-        v: Dict[str, float] = {}
-        norm_focus: Set[str] = set()
+        v: dict[str, float] = {}
+        norm_focus: set[str] = set()
         if focus_files:
             for f in focus_files:
                 norm = f.replace("\\", "/").lstrip("./")
@@ -440,14 +441,14 @@ class RepoMapGraph:
             for n in nodes:
                 v[n] = uniform_val
 
-        out_weights: Dict[str, float] = {}
+        out_weights: dict[str, float] = {}
         for u in nodes:
             out_weights[u] = sum(adj[u].values())
 
-        p: Dict[str, float] = {u: v[u] for u in nodes}
+        p: dict[str, float] = {u: v[u] for u in nodes}
 
         for _ in range(max_iter):
-            p_next: Dict[str, float] = {u: (1.0 - damping) * v[u] for u in nodes}
+            p_next: dict[str, float] = {u: (1.0 - damping) * v[u] for u in nodes}
             dangling_sum = 0.0
 
             for u in nodes:
@@ -483,8 +484,8 @@ class RepoMapGraph:
 
         lines = [f"{rel_path}:"]
 
-        classes: Dict[str, List[SymbolDef]] = defaultdict(list)
-        top_level: List[SymbolDef] = []
+        classes: dict[str, list[SymbolDef]] = defaultdict(list)
+        top_level: list[SymbolDef] = []
 
         for d in fs.defs:
             if d.kind == "class":
@@ -522,7 +523,7 @@ class RepoMapGraph:
 
     def render_map(
         self,
-        focus_files: Optional[List[str]] = None,
+        focus_files: list[str] | None = None,
         budget_tokens: int = 1200,
     ) -> str:
         """Render ranked repository map within budget using binary search tuning."""
@@ -554,7 +555,7 @@ class RepoMapGraph:
         minimal_blocks = [self.format_file_tree(f, detail_level=0) for f in ranked_files[:10]]
         return header + "\n" + "\n\n".join(minimal_blocks)
 
-    def get_symbol_subgraph(self, symbol_name: str) -> Dict[str, Any]:
+    def get_symbol_subgraph(self, symbol_name: str) -> dict[str, Any]:
         """Find where symbol is defined and which files reference it."""
         defs = []
         for path, fs in self.files.items():
@@ -574,11 +575,11 @@ class RepoMapGraph:
         }
 
 
-    def build_symbol_graph(self) -> Tuple[Dict[str, List[Dict[str, Any]]], Dict[str, Set[str]]]:
+    def build_symbol_graph(self) -> tuple[dict[str, list[dict[str, Any]]], dict[str, set[str]]]:
         """Build directed symbol-to-symbol dependency graph."""
-        symbols_meta: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
-        adj: Dict[str, Set[str]] = defaultdict(set)
-        all_def_names: Set[str] = set()
+        symbols_meta: dict[str, list[dict[str, Any]]] = defaultdict(list)
+        adj: dict[str, set[str]] = defaultdict(set)
+        all_def_names: set[str] = set()
 
         for path, fs in self.files.items():
             for d in fs.defs:
@@ -606,7 +607,7 @@ class RepoMapGraph:
 
     def find_causal_path(
         self, start_symbol: str, end_symbol: str, max_depth: int = 8
-    ) -> Optional[List[Dict[str, Any]]]:
+    ) -> list[dict[str, Any]] | None:
         """Find directed shortest path between start_symbol and end_symbol."""
         symbols_meta, adj = self.build_symbol_graph()
 
@@ -616,7 +617,7 @@ class RepoMapGraph:
         # 1. Forward BFS: start -> end
         queue = [(start_symbol, [start_symbol])]
         visited = {start_symbol}
-        found_path: Optional[List[str]] = None
+        found_path: list[str] | None = None
 
         while queue:
             curr, path = queue.pop(0)
@@ -648,7 +649,7 @@ class RepoMapGraph:
 
         # 3. Undirected fallback BFS
         if not found_path:
-            undirected: Dict[str, Set[str]] = defaultdict(set)
+            undirected: dict[str, set[str]] = defaultdict(set)
             for u, nbrs in adj.items():
                 for v in nbrs:
                     undirected[u].add(v)
@@ -679,7 +680,7 @@ class RepoMapGraph:
 
     def find_causal_chain_for_query(
         self, query: str, max_depth: int = 4
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Identify symbols mentioned in query/error and trace their caller lineages."""
         symbols_meta, adj = self.build_symbol_graph()
         tokens = set(re.findall(r"\b[A-Za-z_][A-Za-z0-9_]{2,}\b", query))
@@ -688,7 +689,7 @@ class RepoMapGraph:
         if not matched_symbols:
             return []
 
-        reverse_adj: Dict[str, Set[str]] = defaultdict(set)
+        reverse_adj: dict[str, set[str]] = defaultdict(set)
         for u, nbrs in adj.items():
             for v in nbrs:
                 reverse_adj[v].add(u)

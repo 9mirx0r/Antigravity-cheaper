@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
 """Unit tests verifying Phase 2 robustness upgrades in Antigravity-Cheaper."""
 
-import os
 import shutil
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 
-from antigravity_cheaper.agy_repomap import RepoMapGraph, GitIgnoreMatcher
 from antigravity_cheaper.agy_ast import js_ts_skeleton
-from antigravity_cheaper.agy_prefix_lock import PrefixLockBuilder
-from antigravity_cheaper.agy_memory import MemoryEngine
 from antigravity_cheaper.agy_handoff import prepare_handoff
+from antigravity_cheaper.agy_memory import MemoryEngine
+from antigravity_cheaper.agy_prefix_lock import PrefixLockBuilder
+from antigravity_cheaper.agy_repomap import RepoMapGraph
 
 
 class TestPhase2Improvements(unittest.TestCase):
@@ -118,8 +117,9 @@ export class ParserService {
         self.assertTrue(len(res["sha256"]) == 64)
 
     def test_unified_cli_dispatches(self):
-        from antigravity_cheaper import cli
         import io
+
+        from antigravity_cheaper import cli
 
         old_argv = sys.argv
         old_stdout = sys.stdout

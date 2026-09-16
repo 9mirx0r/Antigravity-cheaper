@@ -13,10 +13,9 @@ from __future__ import annotations
 
 import io
 import json
-import os
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 # Enforce UTF-8 stdio encoding to prevent Windows cp1252 corruption
 if hasattr(sys.stdin, "reconfigure"):
@@ -29,18 +28,19 @@ if hasattr(sys.stdout, "reconfigure"):
 elif hasattr(sys.stdout, "buffer"):
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
+SCRIPT_DIR = Path(__file__).resolve().parent
+
 # Support both package-relative and standalone imports
 try:
     from .agy_ast import generate_skeleton
     from .agy_pack import pack_file
     from .agy_repomap import RepoMapGraph
-except ImportError:
-    SCRIPT_DIR = Path(__file__).resolve().parent
+except (ImportError, ValueError):
     if str(SCRIPT_DIR) not in sys.path:
         sys.path.insert(0, str(SCRIPT_DIR))
-    from agy_ast import generate_skeleton
-    from agy_pack import pack_file
-    from agy_repomap import RepoMapGraph
+    from agy_ast import generate_skeleton  # type: ignore
+    from agy_pack import pack_file  # type: ignore
+    from agy_repomap import RepoMapGraph  # type: ignore
 
 PROTOCOL_VERSION = "2024-11-05"
 SERVER_NAME = "agy-symbol-server"
@@ -143,7 +143,7 @@ TOOLS_SCHEMA = [
 ]
 
 
-def execute_tool(name: str, arguments: Dict[str, Any]) -> str:
+def execute_tool(name: str, arguments: dict[str, Any]) -> str:
     """Execute tool and return clean text result."""
     if name == "get_repo_map":
         root = arguments.get("root_dir", ".")
@@ -162,10 +162,19 @@ def execute_tool(name: str, arguments: Dict[str, Any]) -> str:
         return json.dumps(res, indent=2)
 
     elif name == "get_file_skeleton":
-        root = Path(arguments.get("root_dir", ".")).resolve()
-        file_path = Path(arguments["file_path"])
-        if not file_path.is_absolute():
-            file_path = root / file_path
+        file_path_raw = arguments["file_path"]
+        root_raw = arguments.get("root_dir")
+        if root_raw:
+            root = Path(root_raw).resolve()
+            p = Path(file_path_raw)
+            file_path = (root / p).resolve() if not p.is_absolute() else p.resolve()
+            try:
+                file_path.relative_to(root)
+            except ValueError:
+                return f"Error: File '{file_path}' must reside within root directory '{root}'."
+        else:
+            file_path = Path(file_path_raw).resolve()
+
         style = arguments.get("style", "ellipsis")
         if not file_path.exists():
             return f"Error: File '{file_path}' does not exist."
@@ -198,7 +207,7 @@ class MCPServer:
     def __init__(self):
         self.running = True
 
-    def handle_request(self, request: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def handle_request(self, request: dict[str, Any]) -> dict[str, Any] | None:
         req_id = request.get("id")
         method = request.get("method")
         params = request.get("params", {})
@@ -249,7 +258,7 @@ class MCPServer:
                     "jsonrpc": "2.0",
                     "id": req_id,
                     "result": {
-                        "content": [{"type": "text", "text": f"Tool error: {str(e)}"}],
+                        "content": [{"type": "text", "text": f"Tool error: {e!s}"}],
                         "isError": True,
                     },
                 }
@@ -280,7 +289,7 @@ class MCPServer:
                 err_resp = {
                     "jsonrpc": "2.0",
                     "id": None,
-                    "error": {"code": -32700, "message": f"Parse error: {str(e)}"},
+                    "error": {"code": -32700, "message": f"Parse error: {e!s}"},
                 }
                 sys.stdout.write(json.dumps(err_resp) + "\n")
                 sys.stdout.flush()
@@ -343,9 +352,18 @@ def run_self_test():
     print("All FastMCP server tools verified successfully!")
 
 
-if __name__ == "__main__":
-    if "--test" in sys.argv:
+def main(argv: list[str] | None = None) -> int:
+    """Stdio JSON-RPC MCP server entry point."""
+    if argv is None:
+        argv = sys.argv[1:]
+    if "--test" in argv:
         run_self_test()
-    else:
-        server = MCPServer()
-        server.run_stdio()
+        return 0
+    server = MCPServer()
+    server.run_stdio()
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+

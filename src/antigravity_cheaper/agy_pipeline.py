@@ -14,10 +14,8 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
-import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 # Pipeline Stage Constants
 STAGE_ARCHITECT = "ARCHITECT"
@@ -38,9 +36,9 @@ class WorkerManifest:
         worker_id: str,
         role: str,
         model_tier: str,
-        contracts: List[str],
-        target_files: List[str],
-        context_files: Optional[List[str]] = None,
+        contracts: list[str],
+        target_files: list[str],
+        context_files: list[str] | None = None,
     ):
         self.worker_id = worker_id
         self.role = role
@@ -49,7 +47,7 @@ class WorkerManifest:
         self.target_files = target_files
         self.context_files = context_files or []
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "worker_id": self.worker_id,
             "role": self.role,
@@ -60,7 +58,7 @@ class WorkerManifest:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> WorkerManifest:
+    def from_dict(cls, data: dict[str, Any]) -> WorkerManifest:
         return cls(
             worker_id=data["worker_id"],
             role=data["role"],
@@ -81,12 +79,12 @@ class PipelineState:
         self.stage = STAGE_ARCHITECT
         self.iteration = 1
         self.max_iterations = 3
-        self.spec: Optional[Dict[str, Any]] = None
-        self.swarm_manifests: List[Dict[str, Any]] = []
-        self.implementation_receipt: Optional[Dict[str, Any]] = None
-        self.critique_history: List[Dict[str, Any]] = []
+        self.spec: dict[str, Any] | None = None
+        self.swarm_manifests: list[dict[str, Any]] = []
+        self.implementation_receipt: dict[str, Any] | None = None
+        self.critique_history: list[dict[str, Any]] = []
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "task_id": self.task_id,
             "objective": self.objective,
@@ -101,7 +99,7 @@ class PipelineState:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> PipelineState:
+    def from_dict(cls, data: dict[str, Any]) -> PipelineState:
         obj = cls(
             task_id=data["task_id"],
             objective=data["objective"],
@@ -146,10 +144,10 @@ class CognitivePipeline:
 
     def record_architect_spec(
         self,
-        contracts: List[str],
-        surgical_files: List[str],
-        resolved_ambiguities: List[str],
-    ) -> Dict[str, Any]:
+        contracts: list[str],
+        surgical_files: list[str],
+        resolved_ambiguities: list[str],
+    ) -> dict[str, Any]:
         """Stage 1: Architect records immutable specification and advances to Implementer."""
         if self.state.stage != STAGE_ARCHITECT:
             raise ValueError(f"Cannot record spec in stage '{self.state.stage}'")
@@ -165,11 +163,11 @@ class CognitivePipeline:
 
     def record_implementation_receipt(
         self,
-        touched_files: List[str],
+        touched_files: list[str],
         tests_passed: bool,
         test_summary: str,
         git_diff_stat: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Stage 2: Implementer records compact receipt and advances to Critic."""
         if self.state.stage != STAGE_IMPLEMENTER:
             raise ValueError(f"Cannot record receipt in stage '{self.state.stage}'")
@@ -186,7 +184,7 @@ class CognitivePipeline:
 
     def evaluate_verdict(
         self, verdict: str, feedback: str
-    ) -> Tuple[str, str]:
+    ) -> tuple[str, str]:
         """Stage 3: Critic evaluates implementation with tri-state verdict."""
         if self.state.stage != STAGE_CRITIC:
             raise ValueError(f"Cannot evaluate verdict in stage '{self.state.stage}'")
@@ -232,13 +230,12 @@ class CognitivePipeline:
 
         raise ValueError(f"Unknown verdict: {verdict}")
 
-    def distill_receipt_to_memory(self, db_path: Optional[str] = None) -> Dict[str, Any]:
+    def distill_receipt_to_memory(self, db_path: str | None = None) -> dict[str, Any]:
         """Automatically extract and persist verified task invariants to agy_memory."""
         try:
-            from agy_memory import MemoryEngine
-        except ImportError:
-            # Fallback when running relative
             from .agy_memory import MemoryEngine
+        except (ImportError, ValueError):
+            from agy_memory import MemoryEngine  # type: ignore
 
         # Use root .local/memory.db or default
         target_db = db_path or ".local/memory.db"
@@ -279,10 +276,10 @@ class CognitivePipeline:
 
     def decompose_spec(
         self,
-        num_workers: Optional[int] = None,
+        num_workers: int | None = None,
         model_tier: str = "flash",
-        out_dir: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        out_dir: str | None = None,
+    ) -> list[dict[str, Any]]:
         """Partitions Architect spec into contract-isolated parallel worker manifests."""
         if not self.state.spec:
             raise ValueError("Cannot decompose: Architect specification not recorded.")
@@ -296,11 +293,11 @@ class CognitivePipeline:
         n_workers = num_workers or min(len(surgical_files), 3)
         n_workers = max(1, n_workers)
 
-        file_chunks: List[List[str]] = [[] for _ in range(n_workers)]
+        file_chunks: list[list[str]] = [[] for _ in range(n_workers)]
         for idx, f in enumerate(surgical_files):
             file_chunks[idx % n_workers].append(f)
 
-        manifests: List[Dict[str, Any]] = []
+        manifests: list[dict[str, Any]] = []
         for i, chunk in enumerate(file_chunks):
             if not chunk:
                 continue

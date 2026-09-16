@@ -10,12 +10,10 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
 import sqlite3
 import sys
 from pathlib import Path
 from typing import Any
-
 
 GEMINI_CACHE_THRESHOLD = 2048  # Minimum prefix tokens required to trigger discount
 CACHE_DISCOUNT_PERCENT = 90.0  # Gemini 2.5/3.x cached token discount (10% of base rate)
