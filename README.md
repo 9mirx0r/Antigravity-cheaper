@@ -50,12 +50,12 @@ The toolkit introduces a progressive disclosure filter between the local workspa
 ```bash
 git clone https://github.com/9mirx0r/Antigravity-cheaper.git
 cd Antigravity-cheaper
-pip install -e .
+pip install -e ".[dev,mcp]"
 ```
 
 ### 2. Configure Antigravity MCP
 
-Add the FastMCP symbol server to your Antigravity MCP configuration:
+Add the FastMCP symbol server to your Antigravity MCP configuration (`.gemini/antigravity/mcp_config.json`):
 
 ```json
 {
@@ -70,14 +70,20 @@ Add the FastMCP symbol server to your Antigravity MCP configuration:
 
 ### 3. Unified CLI (`agy`)
 
-All utilities can be executed directly from the terminal via the unified `agy` command or invoked by agents:
+All progressive disclosure utilities can be executed directly from the terminal via the unified `agy` command or invoked by agents:
 
 ```bash
 # Generate a PageRank symbol map fitted to 1,000 tokens (respects .gitignore)
 agy map --root . --budget 1000
 
-# Extract AST skeleton of a specific file
+# Extract AST skeleton of a specific file (signatures preserved, bodies elided)
 agy skeleton --source src/antigravity_cheaper/agy_repomap.py
+
+# Intercept and pack noisy logs to extract exact failure frames with SHA-256
+agy pack --file failure.log --contains "AssertionError" --context 5
+
+# Lock and verify Merkle prefix invariants for Gemini prompt caching (>85% hit rate)
+agy lock --root . --verify
 
 # Query persistent memory repository statistics
 agy memory stats
@@ -87,6 +93,26 @@ agy server --test
 
 # Query the telemetry ledger summary
 agy ledger summary --ledger benchmarks/data/benchmark_usage.jsonl
+```
+
+---
+
+## Repository Layout
+
+```text
+├── src/antigravity_cheaper/      # Canonical package implementation & unified agy CLI
+│   ├── agy_ast.py                # AST skeletonizer & symbol extractor
+│   ├── agy_repomap.py            # Personalized PageRank symbol dependency graph
+│   ├── agy_mcp_server.py         # FastMCP stdio server (JSON-RPC 2.0)
+│   ├── agy_prefix_lock.py        # Merkle tree prefix lock (>85% cache hit rate)
+│   ├── agy_pack.py               # Bounded error slicer & log noise suppressor
+│   ├── agy_handoff.py            # Local threshold router & circuit breaker
+│   ├── agy_ledger.py             # Telemetry recording & cost accountant
+│   ├── agy_memory.py             # SQLite + FTS5 persistent memory
+│   └── cli.py                    # Unified 'agy' umbrella CLI
+├── .agents/                      # Agent configurations & backward-compatible shims
+├── benchmarks/                   # Real-world telemetry benchmarks (Blackbox, Triathlon)
+└── tests/                        # 55 unit tests passing across Python 3.10-3.14
 ```
 
 ---
