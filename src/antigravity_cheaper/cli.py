@@ -44,7 +44,8 @@ def print_help():
     help_text = f"""Antigravity-Cheaper v{__version__} - Context Optimization Toolkit & FastMCP Symbol Server
 
 Usage:
-  agy <command> [options]
+  agyc <command> [options]
+  (or agy-cheaper <command>)
 
 Commands:
   QOL & Diagnostics:
@@ -80,13 +81,13 @@ General Options:
   -v, --version   Show version information and exit
 
 Examples:
-  agy setup --dry-run
-  agy cache --root .
-  agy stats
-  agy map --root . --budget 1200
-  agy skeleton --source src/antigravity_cheaper/cli.py
-  agy memory stats
-  agy server --test
+  agyc setup --dry-run
+  agyc cache --root .
+  agyc stats
+  agyc map --root . --budget 1200
+  agyc skeleton --source src/antigravity_cheaper/cli.py
+  agyc memory stats
+  agyc server --test
 """
     print(help_text)
 

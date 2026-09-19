@@ -19,10 +19,10 @@ In multi-turn coding sessions, agent context windows degrade rapidly. Unbounded 
 
 ## Key Features
 
-- **Unified Umbrella CLI (`agy`)**: Single executable giving access to all progressive disclosure subcommands (`agy map`, `agy skeleton`, `agy pack`, `agy memory`, `agy server`, `agy setup`, `agy cache`, `agy stats`).
-- **FastMCP Auto-Setup Wizard (`agy setup`)**: Auto-detects and registers the symbol server in Antigravity, Cursor, and Claude Desktop configurations with dry-run support.
-- **Gemini Context Caching Advisor (`agy cache`)**: Calculates frozen prefix token volume against Gemini 2.5/3.x thresholds (2,048 tokens), verifying eligibility for the 90% prompt cache discount.
-- **Real-Time Workspace Dashboard (`agy stats`)**: Visual terminal card tracking module coverage, SQLite memory records, Merkle roots, and ledger financials.
+- **Unified Umbrella CLI (`agyc` / `agy-cheaper`)**: Single executable giving access to all progressive disclosure subcommands (`agyc map`, `agyc skeleton`, `agyc pack`, `agyc memory`, `agyc server`, `agyc setup`, `agyc cache`, `agyc stats`).
+- **FastMCP Auto-Setup Wizard (`agyc setup` / `agy-setup`)**: Auto-detects and registers the symbol server in Antigravity, Cursor, and Claude Desktop configurations with dry-run support.
+- **Gemini Context Caching Advisor (`agyc cache` / `agy-cache`)**: Calculates frozen prefix token volume against Gemini 2.5/3.x thresholds (2,048 tokens), verifying eligibility for the 90% prompt cache discount.
+- **Real-Time Workspace Dashboard (`agyc stats` / `agy-stats`)**: Visual terminal card tracking module coverage, SQLite memory records, Merkle roots, and ledger financials.
 - **AST Skeletonizer (`agy_ast.py`)**: Multi-language parser for **Python, JavaScript, TypeScript, Go, and Rust**. Strips implementation bodies with `...`, exposing function signatures, types, structs, and traits in under 50 tokens per file.
 - **PreToolUse Noise Sanitizer (`noise_sanitizer.py`)**: Intercepts commands and filters terminal output to enforce token discipline, wrapping verbose test runners to bounded logs with Never-Worse token guarantees.
 - **Personalized PageRank RepoMap (`agy_repomap.py`)**: Builds an in-memory symbol reference graph respecting `.gitignore` rules and ranks definitions using PageRank, fitting the workspace structure into a strict token budget (default: 1,200 tokens).
@@ -79,43 +79,43 @@ agy setup
 }
 ```
 
-### 3. Unified CLI (`agy`)
+### 3. Unified CLI (`agyc` / `agy-cheaper`)
 
-All progressive disclosure and diagnostic utilities can be executed directly via the unified `agy` command:
+All progressive disclosure and diagnostic utilities can be executed directly via the unified `agyc` (or `agy-cheaper`) umbrella command:
 
 ```bash
 # Auto-configure FastMCP symbol server across detected MCP hosts
-agy setup
+agyc setup
 
 # Verify Gemini 90% context caching eligibility and token volume
-agy cache --root .
+agyc cache --root .
 
 # Display unified workspace, memory, and telemetry dashboard
-agy stats
+agyc stats
 
 # Generate a PageRank symbol map fitted to 1,000 tokens (respects .gitignore)
-agy map --root . --budget 1000
+agyc map --root . --budget 1000
 
 # Extract AST skeleton of a specific file (signatures preserved, bodies elided)
-agy skeleton --source src/antigravity_cheaper/agy_repomap.py
+agyc skeleton --source src/antigravity_cheaper/agy_repomap.py
 
 # Intercept and pack noisy logs to extract exact failure frames with SHA-256
-agy pack --file failure.log --contains "AssertionError" --context 5
+agyc pack --file failure.log --contains "AssertionError" --context 5
 
 # Sanitize test runner command lines to enforce bounded execution
-agy sanitize --cmd "pytest tests/"
+agyc sanitize --cmd "pytest tests/"
 
 # Lock and verify Merkle prefix invariants for Gemini prompt caching (>85% hit rate)
-agy lock --root . --verify
+agyc lock --root . --verify
 
 # Query persistent memory repository statistics
-agy memory stats
+agyc memory stats
 
 # Run FastMCP server self-test
-agy server --test
+agyc server --test
 
 # Query the telemetry ledger summary
-agy ledger summary --ledger benchmarks/data/benchmark_usage.jsonl
+agyc ledger summary --ledger benchmarks/data/benchmark_usage.jsonl
 ```
 
 ---

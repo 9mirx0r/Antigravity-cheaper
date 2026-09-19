@@ -125,16 +125,16 @@ export class ParserService {
         old_stdout = sys.stdout
         try:
             sys.stdout = io.StringIO()
-            sys.argv = ["agy", "--version"]
+            sys.argv = ["agyc", "--version"]
             exit_code = cli.main()
             self.assertEqual(exit_code, 0)
             self.assertIn("antigravity-cheaper v1.0.0", sys.stdout.getvalue())
 
             sys.stdout = io.StringIO()
-            sys.argv = ["agy", "--help"]
+            sys.argv = ["agyc", "--help"]
             exit_code = cli.main()
             self.assertEqual(exit_code, 0)
-            self.assertIn("Usage:\n  agy <command>", sys.stdout.getvalue())
+            self.assertIn("Usage:\n  agyc <command>", sys.stdout.getvalue())
         finally:
             sys.argv = old_argv
             sys.stdout = old_stdout
